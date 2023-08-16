@@ -1,0 +1,308 @@
+import re
+import time
+import json
+import random  
+import requests
+from dateutil import parser
+from airtable import Airtable
+from selenium import webdriver
+from datetime import datetime, timedelta
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
+
+driver_path = "C:\\Users\\Jay\\Downloads\\Python Stuff\\Python3\\chromedriver\\chromedriver-win-x64.exe"
+
+driver = webdriver.Chrome(driver_path)
+driver.get('https://www.pof.com/')
+
+wait = WebDriverWait(driver, 10)
+
+accept = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler')))
+random_wait_time = random.uniform(1, 2)
+time.sleep(random_wait_time)
+accept.click()
+
+sign_up = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.css-pio7a5')))
+time.sleep(random_wait_time)
+sign_up.click()
+
+file_path = r"G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\names.txt"
+
+with open(file_path, 'r') as file:
+    names = file.readlines()
+
+random_name = random.choice(names).strip()
+
+name = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31')))
+time.sleep(random_wait_time)
+name.click()
+time.sleep(1)
+name.send_keys(random_name) 
+
+sign_up2 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#registration-next')))
+time.sleep(random_wait_time)
+sign_up2.click()
+
+woman = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/div/div[1]/div[2]')))
+time.sleep(random_wait_time)
+woman.click()
+
+next1 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button.MuiButtonBase-root.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-fullWidth.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-fullWidth.css-uzb1jv.css-pio7a5')))
+time.sleep(random_wait_time)
+next1.click()
+
+caucasian_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/div/div/div[4]/span[1]')))
+time.sleep(random_wait_time)
+caucasian_button.click()
+
+next2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[2]/div[2]/button')))
+time.sleep(random_wait_time)
+next2.click()
+
+month = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[1]/label/div/div[1]')))
+time.sleep(random_wait_time)
+ActionChains(driver).move_to_element(month).click().perform()
+
+time.sleep(3)
+
+months = [
+    '/html/body/div[4]/div[3]/ul/li[2]',
+    '/html/body/div[4]/div[3]/ul/li[3]',
+    '/html/body/div[4]/div[3]/ul/li[4]',
+    '/html/body/div[4]/div[3]/ul/li[5]',
+    '/html/body/div[4]/div[3]/ul/li[6]',
+    '/html/body/div[4]/div[3]/ul/li[7]',
+    '/html/body/div[4]/div[3]/ul/li[8]',
+    '/html/body/div[4]/div[3]/ul/li[9]',
+    '/html/body/div[4]/div[3]/ul/li[10]',
+    '/html/body/div[4]/div[3]/ul/li[11]',
+    '/html/body/div[4]/div[3]/ul/li[12]',
+    '/html/body/div[4]/div[3]/ul/li[13]'
+]
+
+random_month_index = random.randint(0, len(months) - 1)
+month_chosen = driver.find_element_by_xpath(months[random_month_index])
+
+while True:
+    try:
+        month_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(2)
+
+day = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[2]/label/div/div[1]')))
+time.sleep(random_wait_time)
+ActionChains(driver).move_to_element(day).click().perform()
+
+time.sleep(3)
+
+days = [
+    '/html/body/div[4]/div[3]/ul/li[2]',
+    '/html/body/div[4]/div[3]/ul/li[3]',
+    '/html/body/div[4]/div[3]/ul/li[4]',
+    '/html/body/div[4]/div[3]/ul/li[5]',
+    '/html/body/div[4]/div[3]/ul/li[6]',
+    '/html/body/div[4]/div[3]/ul/li[7]',
+    '/html/body/div[4]/div[3]/ul/li[8]',
+    '/html/body/div[4]/div[3]/ul/li[9]',
+    '/html/body/div[4]/div[3]/ul/li[10]',
+    '/html/body/div[4]/div[3]/ul/li[11]',
+    '/html/body/div[4]/div[3]/ul/li[12]',
+    '/html/body/div[4]/div[3]/ul/li[13]',
+    '/html/body/div[4]/div[3]/ul/li[14]',
+    '/html/body/div[4]/div[3]/ul/li[15]',
+    '/html/body/div[4]/div[3]/ul/li[16]',
+    '/html/body/div[4]/div[3]/ul/li[17]',
+    '/html/body/div[4]/div[3]/ul/li[18]',
+    '/html/body/div[4]/div[3]/ul/li[19]',
+    '/html/body/div[4]/div[3]/ul/li[20]',
+    '/html/body/div[4]/div[3]/ul/li[21]',
+    '/html/body/div[4]/div[3]/ul/li[22]',
+    '/html/body/div[4]/div[3]/ul/li[23]',
+    '/html/body/div[4]/div[3]/ul/li[24]',
+    '/html/body/div[4]/div[3]/ul/li[25]',
+    '/html/body/div[4]/div[3]/ul/li[26]',
+    '/html/body/div[4]/div[3]/ul/li[27]',
+    '/html/body/div[4]/div[3]/ul/li[28]',
+    '/html/body/div[4]/div[3]/ul/li[29]',
+    '/html/body/div[4]/div[3]/ul/li[30]',
+    '/html/body/div[4]/div[3]/ul/li[31]',
+    '/html/body/div[4]/div[3]/ul/li[32]',
+]
+
+random_day_index = random.randint(0, len(days) - 1)
+day_chosen = driver.find_element_by_xpath(days[random_day_index])
+
+while True:
+    try:
+        day_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(2)
+
+year = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[3]/label/div/div[1]')))
+time.sleep(random_wait_time)
+ActionChains(driver).move_to_element(year).click().perform()
+
+time.sleep(3)
+
+years = [
+    '/html/body/div[4]/div[3]/ul/li[21]',
+    '/html/body/div[4]/div[3]/ul/li[22]',
+    '/html/body/div[4]/div[3]/ul/li[23]',
+    '/html/body/div[4]/div[3]/ul/li[24]',
+    '/html/body/div[4]/div[3]/ul/li[25]',
+    '/html/body/div[4]/div[3]/ul/li[26]'
+]
+
+random_years_index = random.randint(0, len(years) - 1)
+years_chosen = driver.find_element_by_xpath(years[random_years_index])
+
+while True:
+    try:
+        years_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(2)
+
+next3 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[4]/div[2]/button')))
+time.sleep(random_wait_time)
+next3.click() 
+
+country = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/label/div/div[1]')))
+time.sleep(random_wait_time)
+ActionChains(driver).move_to_element(country).click().perform()
+
+time.sleep(random_wait_time)
+
+country_box = driver.find_element(By.XPATH, '/html/body/div[4]/div[3]')
+
+scroll_amount = 70  
+for _ in range(scroll_amount):
+    country_box.send_keys(Keys.ARROW_DOWN)
+    time.sleep(0.5) 
+
+country_chosen = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/div[3]/ul/li[72]')))
+time.sleep(random_wait_time)
+country_chosen.click()
+
+state = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div[2]/label/div/div[1]')))
+time.sleep(random_wait_time)
+ActionChains(driver).move_to_element(state).click().perform()
+
+states = [
+    '/html/body/div[4]/div[3]/ul/li[2]',  # England
+    '/html/body/div[4]/div[3]/ul/li[3]',  # Northern Ireland 
+    '/html/body/div[4]/div[3]/ul/li[4]',  # Scotland
+    '/html/body/div[4]/div[3]/ul/li[5]'   # Wales
+]
+
+random_state_index = random.randint(0, len(states) - 1)
+states_chosen = driver.find_element_by_xpath(states[random_state_index])
+
+while True:
+    try:
+        states_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(2)
+
+state_names = ['England', 'Ireland', 'Scotland', 'Wales']
+chosen_state = state_names[random_state_index]
+
+city_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\{}_cities.txt'.format(chosen_state.lower().replace(" ", "_"))
+with open(city_file_path, 'r') as file:
+    cities = file.readlines()
+
+chosen_city = random.choice(cities).strip()
+
+city = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="City"][type="text"]')))
+time.sleep(random_wait_time)
+city.click()
+city.send_keys(chosen_city)
+
+postcodes_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\{}_{}_postcodes.txt'.format(chosen_state.lower().replace(" ", "_"), chosen_city.lower().replace(" ", "_"))
+with open(postcodes_file_path, 'r') as file:
+    postcodes = file.readlines()
+
+chosen_postcode = random.choice(postcodes).strip()
+
+postcode = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Postal Code / ZIP"][type="text"]')))
+time.sleep(random_wait_time)
+postcode.click()
+postcode.send_keys(chosen_postcode)
+
+next4 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[2]/button')))
+time.sleep(random_wait_time)
+next4.click()
+
+emails_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\emails.txt'
+with open(emails_file_path, 'r') as file:
+    emails = file.readlines()
+
+chosen_email = random.choice(emails).strip()
+
+email = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Email"][type="email"]')))
+time.sleep(random_wait_time)
+email.click()
+email.send_keys(chosen_email)
+
+confirm_email = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Confirm email"][type="email"]')))
+time.sleep(random_wait_time)
+confirm_email.click()
+confirm_email.send_keys(chosen_email)
+
+next5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[2]/div[2]/button')))
+time.sleep(random_wait_time)
+next5.click()
+
+accounts_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\accounts.txt'
+with open(accounts_file_path, 'r') as file:
+    accounts = [line.strip() for line in file]
+
+chosen_account = random.choice(accounts)
+username, password = chosen_account.split('-')
+
+time.sleep(random_wait_time)
+
+username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Email"][type="email"]')))
+username_input.click()
+username_input.send_keys(username)
+time.sleep(random_wait_time)
+
+password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Password"][type="password"]')
+password_input.click()
+password_input.send_keys(password)
+time.sleep(random_wait_time)
+
+confirm_password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Confirm Password"][type="password"]')
+confirm_password_input.click()
+confirm_password_input.send_keys(password)
+time.sleep(random_wait_time)
+
+driver.execute_script("window.open('', '_blank');")
+driver.switch_to.window(driver.window_handles[1])
+driver.get("https://www.google.com")
+
+
+
+
+driver.switch_to.window(driver.window_handles[0])
+
