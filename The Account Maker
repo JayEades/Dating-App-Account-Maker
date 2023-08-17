@@ -4,20 +4,35 @@ import json
 import random  
 import requests
 from dateutil import parser
-from airtable import Airtable
 from selenium import webdriver
 from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.common.exceptions import TimeoutException  
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
 
-driver_path = "C:\\Users\\Jay\\Downloads\\Python Stuff\\Python3\\chromedriver\\chromedriver-win-x64.exe"
+model_database = {
+    'Chloe': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+}
 
-driver = webdriver.Chrome(driver_path)
+model_name = input("What is the model's name? ")
+
+if model_name in model_database:
+    attributes = model_database[model_name]
+
+driver_path = r"C:\Users\jayea\Documents\Python\Apps\Real Chromedriver\chromedriver.exe"
+
+driver = webdriver.Chrome()
 driver.get('https://www.pof.com/')
 
 wait = WebDriverWait(driver, 10)
@@ -86,7 +101,7 @@ months = [
 ]
 
 random_month_index = random.randint(0, len(months) - 1)
-month_chosen = driver.find_element_by_xpath(months[random_month_index])
+month_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, months[random_month_index])))
 
 while True:
     try:
@@ -139,7 +154,7 @@ days = [
 ]
 
 random_day_index = random.randint(0, len(days) - 1)
-day_chosen = driver.find_element_by_xpath(days[random_day_index])
+day_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, days[random_day_index])))
 
 while True:
     try:
@@ -167,7 +182,7 @@ years = [
 ]
 
 random_years_index = random.randint(0, len(years) - 1)
-years_chosen = driver.find_element_by_xpath(years[random_years_index])
+years_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, years[random_years_index])))
 
 while True:
     try:
@@ -212,7 +227,7 @@ states = [
 ]
 
 random_state_index = random.randint(0, len(states) - 1)
-states_chosen = driver.find_element_by_xpath(states[random_state_index])
+states_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, states[random_state_index])))
 
 while True:
     try:
@@ -273,6 +288,17 @@ next5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/
 time.sleep(random_wait_time)
 next5.click()
 
+try:
+    element_present = wait.until(EC.presence_of_element_located((By.XPATH, 'your_xpath_here')))
+    
+    driver.execute_script("window.open('', '_blank');")
+    driver.switch_to.window(driver.window_handles[1])
+    driver.get("https://www.google.com")
+    driver.switch_to.window(driver.window_handles[0])
+
+except TimeoutException:
+    pass
+
 accounts_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\accounts.txt'
 with open(accounts_file_path, 'r') as file:
     accounts = [line.strip() for line in file]
@@ -282,27 +308,382 @@ username, password = chosen_account.split('-')
 
 time.sleep(random_wait_time)
 
-username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Email"][type="email"]')))
+username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="text"][placeholder="Username"]')))
 username_input.click()
 username_input.send_keys(username)
 time.sleep(random_wait_time)
 
-password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Password"][type="password"]')
+password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="password"][placeholder="Password"]')
+password_input.click()
+
+time.sleep(random_wait_time)
+
+try:
+    error_message = driver.find_element(By.CSS_SELECTOR, 'p.css-qwa1si')
+    if "That username is already taken." in error_message.text:
+        # Clear the existing input
+        username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="text"][placeholder="Username"]')))
+        time.sleep(random_wait_time)
+        username_input.click()
+        time.sleep(random_wait_time)
+        username_input.clear()
+
+        # Repeat the process of choosing a random account and entering the username
+        accounts_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\accounts.txt'
+        with open(accounts_file_path, 'r') as file:
+            accounts = [line.strip() for line in file]
+
+        chosen_account = random.choice(accounts)
+        username, password = chosen_account.split('-')
+
+        time.sleep(random_wait_time)
+
+        username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="text"][placeholder="Username"]')))
+        username_input.click()
+        username_input.send_keys(username)
+        time.sleep(random_wait_time)
+
+except NoSuchElementException:
+    pass
+
 password_input.click()
 password_input.send_keys(password)
 time.sleep(random_wait_time)
 
-confirm_password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Confirm Password"][type="password"]')
+confirm_password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="password"][placeholder="Confirm password"]')
 confirm_password_input.click()
 confirm_password_input.send_keys(password)
 time.sleep(random_wait_time)
 
-driver.execute_script("window.open('', '_blank');")
-driver.switch_to.window(driver.window_handles[1])
-driver.get("https://www.google.com")
+next6 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+time.sleep(random_wait_time)                                 
+next6.click()
+
+time.sleep(random_wait_time)                                 
+
+lets_go = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+time.sleep(random_wait_time)                                 
+ActionChains(driver).move_to_element(lets_go).click().perform()
+
+men = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)                                 
+men.click()
+
+time.sleep(random_wait_time)                                 
+
+type_of_relationship = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[2]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]'
+]
+
+random_type_index = random.randint(0, len(type_of_relationship) - 1)
+type_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, type_of_relationship[random_type_index])))
+
+while True:
+    try:
+        type_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+    
+time.sleep(random_wait_time)                                 
+
+your_intent = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[3]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[4]'
+]
+
+random_intent_index = random.randint(0, len(your_intent) - 1)
+intent_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, your_intent[random_intent_index])))
+
+while True:
+    try:
+        intent_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(random_wait_time)                                 
+
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
 
 
+smokers = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[2]'
+]
 
+random_smokers_index = random.randint(0, len(smokers) - 1)
+smoker_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, smokers[random_smokers_index])))
 
-driver.switch_to.window(driver.window_handles[0])
+while True:
+    try:
+        smoker_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
 
+time.sleep(random_wait_time)                                 
+
+kids = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[1]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[2]'
+]
+
+random_kids_index = random.randint(0, len(kids) - 1)
+kids_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, kids[random_kids_index])))
+
+while True:
+    try:
+        kids_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(random_wait_time)
+
+next7 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+time.sleep(random_wait_time)
+next7.click()
+
+occupation_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\occupations.txt'
+with open(occupation_file_path, 'r') as file:
+    occupations = file.readlines()
+
+chosen_occupation = random.choice(occupations).strip()
+
+occupation = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input#createprofile-profession-input[placeholder="Occupation"][type="text"]')))
+time.sleep(random_wait_time)
+occupation.click()
+occupation.send_keys(chosen_occupation)
+
+time.sleep(random_wait_time)
+
+education = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[1]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[2]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[3]'
+]
+
+random_education_index = random.randint(0, len(education) - 1)
+education_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, education[random_education_index])))
+
+while True:
+    try:
+        education_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+slider1 = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'span.MuiSlider-thumb[data-index="0"]')))
+offset = 50  
+actions = ActionChains(driver)
+actions.click_and_hold(slider1).move_by_offset(0, -offset).release().perform()
+
+driver.execute_script("window.scrollBy(0, 200);")
+
+income = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[2]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[3]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[4]'
+]
+
+random_income_index = random.randint(0, len(income) - 1)
+income_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, income[random_income_index])))
+
+while True:
+    try:
+        income_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+time.sleep(random_wait_time)
+
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+
+time.sleep(random_wait_time)
+
+religion = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+religion.click()
+
+time.sleep(random_wait_time)
+
+second_language = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+second_language.click()
+
+time.sleep(random_wait_time)
+
+next8 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+time.sleep(random_wait_time)
+next8.click()
+
+marry = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+marry.click()
+
+time.sleep(random_wait_time)
+
+slider2 = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'span.MuiSlider-thumb[data-index="0"]')))
+actions = ActionChains(driver)
+actions.click_and_hold(slider2).move_by_offset(0, -offset).release().perform()
+
+time.sleep(random_wait_time)
+
+eye_colour = {
+   'blue':'/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]', #Blue 
+   'brown': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[4]', #Brown
+   'green':'/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[5]'  #Green
+}
+
+eye_colour_xpath = eye_colour[attributes['eye_colour']]
+wait.until(EC.presence_of_element_located((By.XPATH, eye_colour_xpath))).click()
+
+hair_colour = {
+    'black': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]', #Black
+    'blonde': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[2]', #Blonde
+    'brown': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[3]', #Brown
+    'red': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[4]'  #Red
+}
+
+hair_colour_xpath = hair_colour[attributes['hair_colour']]
+wait.until(EC.presence_of_element_located((By.XPATH, hair_colour_xpath))).click()
+
+slider3 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.MuiSlider-thumb[data-index="0"')))
+actions = ActionChains(driver)
+actions.click_and_hold(slider3).move_by_offset(0, -offset).release().perform()
+
+body_type = {
+    'thin': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[2]', #Thin
+    'athletic': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[3]', #Athletic
+    'average': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[4]', #Average
+    'curvy': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[5]'  #Curvy
+}
+
+body_type_xpath = body_type[attributes['body_type']]
+wait.until(EC.presence_of_element_located((By.XPATH, body_type_xpath))).click()
+
+next9 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+time.sleep(random_wait_time)
+next9.click()
+
+personality = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]', #Adventurer 
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[2]', #Animal Lover
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[3]', #Artsy
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[4]', #Athletic
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[5]'  #Beach
+]
+
+random_personality_index = random.randint(0, len(personality) - 1)
+personality_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, personality[random_personality_index])))
+
+while True:
+    try:
+        personality_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+alcohol = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]')))
+time.sleep(random_wait_time)
+alcohol.click()
+
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+
+smoker1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+smoker1.click()
+
+drugs = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+drugs.click()
+
+vehicle = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[2]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[3]'
+]
+
+random_vehicle_index = random.randint(0, len(vehicle) - 1)
+vehicle_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, vehicle[random_vehicle_index])))
+
+while True:
+    try:
+        vehicle_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+next10 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+
+have_kids = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[2]')))
+time.sleep(random_wait_time)
+have_kids.click()
+
+want_kids = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]')))
+time.sleep(random_wait_time)
+want_kids.click()
+
+have_pets = [
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[2]',
+    '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[3]'
+]
+
+random_have_pets_index = random.randint(0, len(have_pets) - 1)
+have_pets_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, have_pets[random_have_pets_index])))
+
+while True:
+    try:
+        have_pets_chosen.click()
+        break
+    except ElementClickInterceptedException:
+        print("Element click intercepted. Waiting for 5 seconds...")
+        time.sleep(5)
+
+parents_married = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]')))
+time.sleep(random_wait_time)
+parents_married.click()
+
+slider4 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.MuiSlider-thumb[data-index="1"')))
+actions = ActionChains(driver)
+actions.click_and_hold(slider3).move_by_offset(0, -offset).release().perform()
+
+birth_order = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/ul/li/button/svg/path[2]')))
+time.sleep(random_wait_time)
+birth_order.click()
+
+next11 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+time.sleep(random_wait_time)
+next11.click()
+
+headline_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input#mui-1.MuiInputBase-input.MuiInput-input.css-mnn31[placeholder="Think like an ad headline for your profile"][maxlength="40"]')))
+
+next12 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+
+blurb = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'textarea#createprofile-styled-textarea-input-with-border.MuiInputBase-input.MuiInput-input.MuiInputBase-inputMultiline.css-10oer18[placeholder="This could be your hobbies, dreams, nightmares, anything"][maxlength="7000"][aria-label="What\'s the most important thing that people should know about you?"]')))
+
+next13 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+
+talking_about = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'textarea#createprofile-styled-textarea-input-with-border.MuiInputBase-input.MuiInput-input.MuiInputBase-inputMultiline.css-10oer18[placeholder="As long as it\'s not crossfit. Jokes."][maxlength="3000"][aria-label="Tell us your favorite topics for conversation."]')))
+
+next14 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+
+hobbies = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.MuiInputBase-inputAdornedEnd.css-mnn31[placeholder="Add an interest"]')))
+#needs to have a 'enter' button
+
+next15 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
