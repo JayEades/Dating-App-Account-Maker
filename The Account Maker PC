@@ -4,6 +4,7 @@ import time
 import json
 import random  
 import requests
+from airtable import Airtable
 from dateutil import parser
 from selenium import webdriver
 from datetime import datetime, timedelta
@@ -20,7 +21,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
 
-airtable = Airtable('appoAPLSKzDQR3uaD', 'Dating App Accounts', api_key='keypRV2FeRUvc7Zej')
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Dating App Accounts'
+api_key='keypRV2FeRUvc7Zej'
+
 airtable = Airtable(base_key, table_name, api_key)
 
 model_database = {
@@ -29,7 +33,30 @@ model_database = {
         'hair_colour': 'blonde',
         'body_type': 'thin'
     },
+    'Carla': {
+        'eye_colour': 'brown',
+        'hair_colour': 'brown',
+        'body_type': 'average'
+    },
+    'Emma': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'athletic'
+    },
+    'Laurie': {
+        'eye_colour': 'green',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+    'Tara': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
 }
+
+for model_name in model_database:
+    print(model_name)
 
 model_name = input("What is the model's name? ")
 
@@ -294,10 +321,6 @@ next5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/
 time.sleep(random_wait_time)
 next5.click()
 
-emails.remove(chosen_email)
-with open(emails_file_path, 'w') as file:
-    file.writelines(emails)
-
 try:
     element_present = wait.until(EC.presence_of_element_located((By.XPATH, 'your_xpath_here')))
     
@@ -364,12 +387,8 @@ next6 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
 time.sleep(random_wait_time)                                 
 next6.click()
 
-accounts.remove(chosen_account)
-with open(accounts_file_path, 'w') as file:
-    file.write('\n'.join(accounts))
-
 try:
-    error_message = driver.find_element(By.CSS_SELECTOR, 'p[aria-live="polite"][id="-input-pair-error-helper"].css-qwa1si[style="display: block;"]')
+        error_message = driver.find_element(By.CSS_SELECTOR, 'p[aria-live="polite"][id="-input-pair-error-helper"].css-qwa1si[style="display: block;"]')
         new_chosen_email = random.choice(emails).strip()
         email.click()
         email.clear()
@@ -398,6 +417,14 @@ except StaleElementReferenceException:
     lets_go = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'MuiButton-containedPrimary')))
     actions = ActionChains(driver)
     actions.click(lets_go).perform()
+    
+emails.remove(chosen_email)
+with open(emails_file_path, 'w') as file:
+    file.writelines(emails)
+    
+accounts.remove(chosen_account)
+with open(accounts_file_path, 'w') as file:
+    file.write('\n'.join(accounts))
 
 men = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]')))
 time.sleep(random_wait_time)                                 
@@ -868,7 +895,6 @@ photo_files1 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path
 selected_photo1 = random.choice(photo_files1)
 selected_photo_path1 = os.path.join(photo_directory, selected_photo1)
 image_upload1.send_keys(selected_photo_path1)
-os.remove(selected_photo_path1)
 
 time.sleep(random_wait_time)
 
@@ -884,7 +910,6 @@ photo_files2 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path
 selected_photo2 = random.choice(photo_files2)
 selected_photo_path2 = os.path.join(photo_directory, selected_photo2)
 image_upload2.send_keys(selected_photo_path2)
-os.remove(selected_photo_path2)
 
 time.sleep(random_wait_time)
 
@@ -897,6 +922,9 @@ time.sleep(random_wait_time)
 next16 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[2]/button')))
 time.sleep(random_wait_time)
 next16.click()
+
+os.remove(selected_photo_path1)
+os.remove(selected_photo_path2)
 
 next17 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/button')))
 time.sleep(random_wait_time)
@@ -940,6 +968,16 @@ driver.execute_script("window.scrollBy(0, 200);")
 driver.execute_script("window.scrollBy(0, 200);")
 driver.execute_script("window.scrollBy(0, 200);")
 driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+driver.execute_script("window.scrollBy(0, 200);")
+
+random_click = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/div/div[4]/div[2]')))
+time.sleep(random_wait_time)
+random_click.click()
 
 save_changes = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/div/div[4]/div[1]/div[10]/div/button')))
 time.sleep(random_wait_time)
