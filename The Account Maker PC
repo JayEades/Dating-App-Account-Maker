@@ -63,9 +63,9 @@ model_name = input("What is the model's name? ")
 if model_name in model_database:
     attributes = model_database[model_name]
 
-driver_path = r"C:\Users\Jay\Downloads\Python Stuff\Python3\chromedriver\chromedriver-windows-x64.exe"
+driver_path = r"C:\Users\jayea\Documents\Python\Apps\Real Chromedriver\chromedriver.exe"
 
-driver = webdriver.Chrome(driver_path)
+driver = webdriver.Chrome()
 driver.get('https://www.pof.com/')
 
 wait = WebDriverWait(driver, 10)
@@ -602,7 +602,7 @@ time.sleep(random_wait_time)
 
 slider2 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-longestrelationship-select")))
 slider_width2 = slider2.size['width']
-offset = slider_width2 / 1
+offset = slider_width2 / 3
 slider_handle2 = slider2.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
 action = ActionChains(driver)
 action.click_and_hold(slider_handle2).move_by_offset(offset, 0).release().perform()
@@ -630,7 +630,7 @@ wait.until(EC.presence_of_element_located((By.XPATH, hair_colour_xpath))).click(
 
 slider3 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-height-select")))
 slider_width3 = slider3.size['width']
-offset = slider_width3 / 1
+offset = slider_width3 / 3
 slider_handle3 = slider3.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
 action = ActionChains(driver)
 action.click_and_hold(slider_handle3).move_by_offset(offset, 0).release().perform()
@@ -734,7 +734,7 @@ parents_married.click()
 
 slider4 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-siblings-select")))
 slider_width4 = slider4.size['width']
-offset = slider_width4 / 2
+offset = slider_width4 / 3
 slider_handle4 = slider4.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
 action = ActionChains(driver)
 action.click_and_hold(slider_handle4).move_by_offset(offset, 0).release().perform()
@@ -946,11 +946,12 @@ edit_profile = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/
 time.sleep(random_wait_time)
 edit_profile.click() 
 
-insta_box_file_path = r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes\insta_box.txt'
+file_name = f"{model_name.lower()}_insta_box.txt"
+insta_box_file_path = os.path.join(r'G:\My Drive\ALL FILES\Rhys admin file\DATING APPS\.txt Files For Dating App Codes', file_name)
 with open(insta_box_file_path, 'r') as file:
     insta_boxs = file.readlines()
 
-chosen_insta_boxs = random.choice(insta_boxs).strip()
+chosen_insta_box = random.choice(insta_boxs).strip()
 
 insta_box = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/div/div[4]/div[2]/div[2]/div/div[2]/div/textarea[1]')))
 time.sleep(random_wait_time)
@@ -961,7 +962,7 @@ time.sleep(0.5)
 insta_box.send_keys(Keys.ENTER)
 insta_box.send_keys(Keys.ENTER)
 time.sleep(random_wait_time)
-insta_box.send_keys(chosen_insta_boxs)
+insta_box.send_keys(chosen_insta_box)
 
 driver.execute_script("window.scrollBy(0, 200);")
 driver.execute_script("window.scrollBy(0, 200);")
@@ -1006,7 +1007,7 @@ record_data = {
     "Hobbies": chosen_hobby,
     "Main Photo": selected_photo_path1,
     "Second Photo": selected_photo_path2,
-    "Font used for 'Insta'": chosen_insta_boxs
+    "Font used for 'Insta'": chosen_insta_box
 }
 
 airtable.insert(record_data)
