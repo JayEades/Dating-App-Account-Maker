@@ -1,0 +1,241 @@
+import re
+import time
+import json
+import random
+import requests
+from selenium import webdriver
+from datetime import datetime, timedelta
+from dateutil import parser
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException
+from concurrent.futures import ThreadPoolExecutor
+from airtable import Airtable
+
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Swipe Sessions'
+api_key='keypRV2FeRUvc7Zej'
+
+airtable = Airtable(base_key, table_name, api_key)
+
+# Define your range settings
+MAX_SWIPES_MIN = 1
+MAX_SWIPES_MAX = 5
+LEFT_SWIPE_PERCENTAGE_MIN = 0.4
+LEFT_SWIPE_PERCENTAGE_MAX = 0.6
+
+# Calculate random values based on the ranges set
+num_of_swipes = random.randint(MAX_SWIPES_MIN, MAX_SWIPES_MAX)
+
+# Initialize swipe counters
+total_swipes = 0
+total_likes = 0
+total_nos = 0
+total_maybes = 0  # Added this counter
+
+access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiNWE0ZmJmNTVhMzU0Yjk3N2RiYWZmOGM2NmNkYjY1NTMyNzQ2ZmE4NmVlMDkyZDhmNDRkMWYxMDEzZWVmN2E2YTNjZWE4MmJlNzRjOWYxODkiLCJpYXQiOjE2OTMyNjEzODUuOTk2Mzg5LCJuYmYiOjE2OTMyNjEzODUuOTk2MzkxLCJleHAiOjE2OTU4NTMzODUuOTg4MTQyLCJzdWIiOiIyNTg1Nzc1Iiwic2NvcGVzIjpbXX0.N_mNiIHELlX_JIAahpFhA251Vn_kaDdRjkGL30p_OS4RMMqmUm2--19G8ecYd47Xffy96aV0mYUF4BinMtoRI7mSGfvBxl-u-jLaepdiLynEgfBvVlaLNICBF2kgtaCTlNVcXN0L-gZMmM1w7Zi1TFZcXNW2UvziUldJWyo8qQ_4I1rQHJopf7PU_roiJiP37MARxx1Av7jA5kA3JY-HkcwtcutwUJfFTVkoTC6NSuOdc7UVYHMt12YOLfJTnAeDNNSH8lkq_HTKY3Dl6OF6QME_Kahut1ss5nJcaSazgSG6EyzJJQEC_kNniqqygAV6IN4x5cntYTGwHkKEZadO1CFB-Ey_mSTCBMwyeIdy0TQn7Dw6gGBRX9eReCFlG1YAsLPxcxG3eHX5JuGeRdn9uJIHZ7CGQ2Yaa8-5bBGOJt6iw3oMBdNHKw-ZsKug9d6Ioo5vHOuqc2Fz4eB6wbxzY32Lb-WtrhuESUTZSi9qEHHtvZIpAh_tHSVcyDjTMD-MLXgB_lKdXDvwtwxVIf1rmHCRxOSe80MZCAMp5HEr7wwJj0AgygX3-w50jiAHA_1NWWW_noSpGU4ITQ9sWkfN1DRaPH56dum-9W13QXeiDualwmwnF8BcvRmoQpUfmPO-ijQpSecT9Dg2Vgq-fFpdRHjISbB9Fvq5Cqi10MMEZRI"
+
+list_profiles_url = "https://dolphin-anty-api.com/browser_profiles"
+
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+API_BASE_URL = "http://localhost:3001/v1.0"
+
+response = requests.get(list_profiles_url, headers=headers)
+if response.status_code == 200:
+    profiles_data = response.json()
+    active_profiles = profiles_data.get('data', [])
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        for profile in active_profiles:
+            profile_name = profile.get('name')
+            model_name = profile_name.split(" - ")[1]
+            profile_id = profile.get('id')
+            
+            print(f"Model name: {model_name}, Profile ID: {profile_id}")
+            
+else:
+    print("Failed to retrieve profile information from the API.")
+    
+start_url = f"{API_BASE_URL}/browser_profiles/{profile_id}/start?automation=1"
+response = requests.get(start_url)
+data = response.json()
+
+if not data.get('success'):
+    raise Exception("Failed to start the Dolphin Anty profile.")
+
+port = data['automation']['port']
+
+driver_path = r"C:\Users\Jay\Downloads\Python Stuff\Chromedriver\chromedriver-windows-x64-dolphin.exe"
+options = webdriver.ChromeOptions()
+options.add_argument(f'--remote-debugging-port={port}')
+options.add_argument('--user-data-dir=./User_Data')
+
+# Connect directly to Dolphin Anty profile (assuming it's Chrome-based)
+debugger_address = f"localhost:{port}"
+options.debugger_address = debugger_address
+
+service = Service(executable_path=driver_path)
+driver = webdriver.Chrome(service=service, options=options)
+
+driver.get('https://www.pof.com/meetme/')
+wait = WebDriverWait(driver, 10)
+
+# Generic error handler
+def handle_error(e):
+    print(f"An error occurred: {e}")
+    driver.get('https://www.pof.com/meetme')  # Navigate back to the page
+    time.sleep(5)  # Add a delay to ensure the page is loaded
+
+# Modify action functions with error handling
+def like(driver):
+    try:
+        Like_button_xpath = "//div[@class='css-uk0n99']//button[@id='meetmevotebutton-yes']"
+        Like_button = wait.until(EC.presence_of_element_located((By.XPATH, Like_button_xpath)))
+        Like_button.click()
+    except (NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException) as e:
+        handle_error(e)
+
+def super_like(driver):
+    try:
+        Superlike_button_xpath = "//div[@class='css-uk0n99']//button[@id='meetmevotebutton-superyes']"
+        Superlike_button = wait.until(EC.presence_of_element_located((By.XPATH, Superlike_button_xpath)))
+        Superlike_button.click()
+    except (NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException) as e:
+        handle_error(e)
+
+def maybe(driver):
+    try:
+        maybe_xpath = "//div[@class='css-uk0n99']//button[@id='meetmevotebutton-maybe']"
+        maybe_button = wait.until(EC.presence_of_element_located((By.XPATH, maybe_xpath)))
+        maybe_button.click()
+    except (NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException) as e:
+        handle_error(e)
+
+def no(driver):
+    try:
+        no_xpath = "//div[@class='css-uk0n99']//button[@id='meetmevotebutton-no']"
+        no_button = wait.until(EC.presence_of_element_located((By.XPATH, no_xpath)))
+        no_button.click()
+    except (NoSuchElementException, StaleElementReferenceException, ElementClickInterceptedException, TimeoutException) as e:
+        handle_error(e)
+
+def get_next_session_id():
+    # Get the list of records from the Airtable table
+    records = airtable.get_all()
+    
+    # Extract the session IDs and determine the maximum session ID
+    # Assumes that the field name in Airtable is "Session ID"
+    session_ids = [record['fields'].get('Session ID', 0) for record in records]
+    
+    if not session_ids:  # if there are no records yet
+        return 1
+    else:
+        return max(session_ids) + 1
+
+# Swipe logic
+def decide_swipe():
+    if total_swipes < 10:  # Changed from 5 to 10
+        # For the first 5-10 swipes, it's completely random between Yes, No, and Maybe
+        return random.choice(['Yes', 'No', 'Maybe'])
+    else:
+        current_no_percentage = total_nos / total_swipes
+        if current_no_percentage < LEFT_SWIPE_PERCENTAGE_MIN:
+            return 'No'
+        elif current_no_percentage > LEFT_SWIPE_PERCENTAGE_MAX:
+            return 'Yes'
+        else:
+            return 'No' if random.random() < current_no_percentage else 'Yes'
+
+def log_session_to_airtable(profile_id, total_swipes, total_nos, total_yes, total_maybes):
+    record = {
+        "Profile ID": profile_id,
+        "Swipes": total_swipes,
+        "No": total_nos,
+        "Yes": total_yes,
+        "Maybe": total_maybes
+    }
+    
+    response = airtable.insert(record)
+    if 'id' in response:
+        print("Logged session to Airtable successfully!")
+    else:
+        print(f"Failed to log session to Airtable. Response: {response}")
+
+# Swipe logic
+def decide_swipe():
+    if total_swipes < 10:  # Changed from 5 to 10
+        # For the first 5-10 swipes, it's completely random between Yes, No, and Maybe
+        return random.choice(['Yes', 'No', 'Maybe'])
+    else:
+        current_no_percentage = total_nos / total_swipes
+        if current_no_percentage < LEFT_SWIPE_PERCENTAGE_MIN:
+            return 'No'
+        elif current_no_percentage > LEFT_SWIPE_PERCENTAGE_MAX:
+            return 'Yes'
+        else:
+            return 'No' if random.random() < current_no_percentage else 'Yes'
+
+def log_session_to_airtable(profile_id, total_swipes, total_nos, total_yes, total_maybes):
+    record = {
+        "Profile ID": profile_id,
+        "Swipes": total_swipes,
+        "No": total_nos,
+        "Yes": total_yes,
+        "Maybe": total_maybes
+    }
+    
+    response = airtable.insert(record)
+    if 'id' in response:
+        print("Logged session to Airtable successfully!")
+    else:
+        print(f"Failed to log session to Airtable. Response: {response}")
+
+# Swipe logic and loop
+current_swipe = 0
+while current_swipe < num_of_swipes:
+    try:
+        swipe = decide_swipe()
+
+        if swipe == 'Yes':
+            like(driver)
+            total_likes += 1
+        elif swipe == 'No':
+            no(driver)
+            total_nos += 1
+        else:  # This is for 'Maybe'
+            maybe(driver)
+            total_maybes += 1
+
+        current_swipe += 1
+        total_swipes += 1
+
+        # Print the current statistics
+        no_percentage = (total_nos / total_swipes) * 100  # Convert to percentage
+        print(f"Total Likes: {total_likes}, Total No's: {total_nos}, Total Maybes: {total_maybes}, No %: {no_percentage:.2f}%")
+
+        time.sleep(random.uniform(2.5, 15))
+
+    except Exception as e:
+        handle_error(e)
+
+# Assuming PROFILE_ID is initially a string
+try:
+    PROFILE_ID = int(profile_id)
+except ValueError:
+    print(f"Failed to convert PROFILE_ID '{profile_id}' to an integer.")
+    # Handle this error as required
+
+# Call the log function after your swiping loop is finished
+log_session_to_airtable(profile_id, total_swipes, total_nos, total_likes, total_maybes)
+
