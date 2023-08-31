@@ -1,0 +1,133 @@
+import re
+import os
+import json
+import time
+import string
+import random
+import requests
+from dateutil import parser
+from airtable import Airtable
+from selenium import webdriver
+from datetime import datetime, timedelta
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, StaleElementReferenceException
+
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Dating App Accounts'
+api_key = 'keypRV2FeRUvc7Zej'
+
+airtable = Airtable(base_key, table_name, api_key)
+
+model_database = {
+    'Chloe': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+    'Carla': {
+        'eye_colour': 'brown',
+        'hair_colour': 'brown',
+        'body_type': 'average'
+    },
+    'Emma': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'athletic'
+    },
+    'Laurie': {
+        'eye_colour': 'green',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+    'Tara': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+}
+
+for model_name in model_database:
+    print("Model name chosen automatically")
+
+access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZDk3NzBiNmQ4MTFhZjZhMDFmMzJkOTk3NTY4YjcxMWI3NjVmODAyMGMzMDlkMGI5OWYyMTViZTE1MWY1MWEwZjcyMmJhNzYxYjgzMmYxNmMiLCJpYXQiOjE2OTMzNDgxNTUuNzYxNTE3LCJuYmYiOjE2OTMzNDgxNTUuNzYxNTE4LCJleHAiOjE2OTU5NDAxNTUuNzUyMzAyLCJzdWIiOiIyNjMwNDg4Iiwic2NvcGVzIjpbXX0.AtPRkN38KcD3BsY-WS1hx6Mlf0TP5v8XwHGxN0Bs9WutM02lec0qCBYM5QXuWuvsxBev6RXb4tTQPt_pf6Qsdvmobeq_EH7ulG8ry0Aun7NZJTMzMbdw5x5KojLVm789vUbA8nbDf_n2jTQuPQeourBwd7DjTQtyrwgCQsC51cs0vstKtv1VkiAXCFzvWibZ2DUvOOdIDn2829uYZnFlPx4uPagK2-iUmZp-RX0T9P9fb0z5MOPG6C2IW2KhEt_5RTyTQUn-cNSGbwOBRUJ67yd1Z9HLL-ApunitFU3qPuj0lXSp9OfmfNB0cmG7PRQHxorGbOJMPLdNjC7r48yqW8yRhlKHiuPvYKpDNo8H6ZvOMMAXjfRIqSnQhZris4fXrQHKymPtwObkofiMA4eSlFwvQNMWCR0iwIB-Hriv0F-FnYn_WesdMo85TzRtpGEO-GtTrhCc00O2AdO9kj2HwwUsLhpB95e3XLU5IhL_bTCCEJYMUbLeyTeIt_0U6KkAnScfYST7DSvTVN_FPPYTOdYUhxVLv16TpN88fp6FsOM5amWpz2EvJsecGRB6_POsNCw_w6EkH4XHwSzzp-H3xhP20YU3QT6ml95HnoNrhZAvIP-yCHLT12g4mF4iyaVy89vncwUcSr20T3Wg8jNWR-6bn5LtLJ26A0AELKlUtp8"
+
+list_profiles_url = "https://dolphin-anty-api.com/browser_profiles"
+
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+API_BASE_URL = "http://localhost:3001/v1.0"
+
+def start_profile(PROFILE_ID):
+    start_url = f"{API_BASE_URL}/browser_profiles/{PROFILE_ID}/start?automation=1"
+    response = requests.get(start_url)
+    data = response.json()
+
+    if not data.get('success'):
+        raise Exception("Failed to start the Dolphin Anty profile.")
+
+    port = data['automation']['port']
+
+    driver_path = r"C:\Users\Jay\Downloads\Python Stuff\Chromedriver\chromedriver-windows-x64.exe"
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'--remote-debugging-port={port}')
+    options.add_argument('--user-data-dir=./User_Data')
+    
+    service = Service(executable_path=driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # Connect directly to Dolphin Anty profile (assuming it's Chrome-based)
+    debugger_address = f"localhost:{port}"
+    options.debugger_address = debugger_address
+
+    driver.get('https://www.pof.com/')
+    wait = WebDriverWait(driver, 10)
+    random_wait_time = random.uniform(3, 7)
+
+    time.sleep(10)
+    print("STARTING")
+
+    try:
+        accept = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler')))
+        time.sleep(random_wait_time)
+        accept.click()
+    except TimeoutException:
+        print("The privacy pop-up did not appear or the accept button was not found.")
+
+    sign_up = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.css-pio7a5')))
+    time.sleep(random_wait_time)
+    sign_up.click()
+    
+    time.sleep(10)
+    
+if model_name in model_database:
+    attributes = model_database[model_name]
+else:
+    print("Model name not found in datebase")
+    
+response = requests.get(list_profiles_url, headers=headers)
+if response.status_code == 200:
+    profiles_data = response.json()
+    active_profiles = profiles_data.get('data', [])
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for profile in active_profiles:
+            profile_name = profile.get('name')
+            model_name = profile_name.split(" - ")[1]
+            profile_id = profile.get('id')
+            
+            print(f"Model name: {model_name}, Profile ID: {profile_id}")
+            
+            executor.submit(start_profile, profile_id)
+            time.sleep(7)
+else:
+    print("Failed to retrieve profile information from the API.")
