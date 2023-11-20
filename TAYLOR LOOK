@@ -1283,6 +1283,8 @@ def start_profile(PROFILE_ID):
         verify.click()
     except TimeoutException:
         print(f"{profile_name} failed to click verify button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
 
@@ -1298,6 +1300,8 @@ def start_profile(PROFILE_ID):
         image_upload1.send_keys(selected_photo_path1)
     except TimeoutException:
         print(f"{profile_name} failed to upload first photo")
+        print("------------------------------------------------------------------")
+
 
     time.sleep(random_wait_time)
 
@@ -1307,6 +1311,8 @@ def start_profile(PROFILE_ID):
         save1.click()
     except TimeoutException:
         print(f"{profile_name} failed to click save1 button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
 
@@ -1321,6 +1327,8 @@ def start_profile(PROFILE_ID):
         image_upload2.send_keys(selected_photo_path2)
     except TimeoutException:
         print(f"{profile_name} failed to upload second photo")
+        print("------------------------------------------------------------------")
+
 
     time.sleep(random_wait_time)
 
@@ -1330,6 +1338,8 @@ def start_profile(PROFILE_ID):
         save2.click()
     except TimeoutException:
         print(f"{profile_name} failed to click save2 button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
 
@@ -1341,6 +1351,8 @@ def start_profile(PROFILE_ID):
         next16.click()
     except TimeoutException:
         print(f"{profile_name} failed to click next16 button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
     
@@ -1348,6 +1360,8 @@ def start_profile(PROFILE_ID):
     
     try:
         print(f"Survey came up for {profile_name}")
+        print("------------------------------------------------------------------")
+
         
         try:
             skip1 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[5]/a/span/span/span")))
@@ -1355,6 +1369,8 @@ def start_profile(PROFILE_ID):
             skip1.click()
         except TimeoutException:
             print(f"Survey failed at part 1 for {profile_name}")
+            print("------------------------------------------------------------------")
+
     
         
         try:
@@ -1363,7 +1379,8 @@ def start_profile(PROFILE_ID):
             skip2.click()
         except TimeoutException:
             print(f"Survey failed at part 2 for {profile_name}")
-        
+            print("------------------------------------------------------------------")
+
         
         try:
             skip3 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[5]/a/span/span/span")))
@@ -1371,6 +1388,8 @@ def start_profile(PROFILE_ID):
             skip3.click()
         except TimeoutException:
             print(f"Survey failed at part 3 for {profile_name}")
+            print("------------------------------------------------------------------")
+
         
         try:
             skip4 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[5]/a/span/span/span")))
@@ -1378,6 +1397,8 @@ def start_profile(PROFILE_ID):
             skip4.click()
         except TimeoutException:
             print(f"Survey failed at part 4 for {profile_name}")
+            print("------------------------------------------------------------------")
+
         
         try:
             next_survey = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'MuiButton-contained')))
@@ -1385,6 +1406,8 @@ def start_profile(PROFILE_ID):
             next_survey.click()
         except TimeoutException:
             print(f"Survey failed at last part for {profile_name}")
+            print("------------------------------------------------------------------")
+
         
     except TimeoutException:
         pass
@@ -1398,6 +1421,8 @@ def start_profile(PROFILE_ID):
         next17.click()
     except TimeoutException:
         print(f"{profile_name} failed to click next17 button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
 
@@ -1407,6 +1432,8 @@ def start_profile(PROFILE_ID):
         got_it.click()
     except TimeoutException:
         print(f"{profile_name} failed to click got_it button")
+        print("------------------------------------------------------------------")
+
     
     #saved_progress()
                                                         
@@ -1416,6 +1443,8 @@ def start_profile(PROFILE_ID):
         no_thanks.click() 
     except TimeoutException:
         print(f"{profile_name} failed to click no_thanks button")
+        print("------------------------------------------------------------------")
+
         
     try:
         x_button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, 'putXPathHere')))
@@ -1423,6 +1452,8 @@ def start_profile(PROFILE_ID):
         x_button.click()
     except TimeoutException:
         print(f"{profile_name} failed to click X_button button")
+        print("------------------------------------------------------------------")
+
     
     #xpath for profile 1 - /html/body/div[1]/div[1]/div[2]/div/div/div/div[3]/div/div/ul/li[1]/a/div/img    
                                                 
