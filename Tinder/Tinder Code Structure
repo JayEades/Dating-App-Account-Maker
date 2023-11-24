@@ -1,0 +1,571 @@
+import os
+import time
+import string
+import random
+import requests
+from airtable import Airtable
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, StaleElementReferenceException
+
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Dating App Accounts'
+api_key = 'keypRV2FeRUvc7Zej'
+
+airtable = Airtable(base_key, table_name, api_key)
+
+profile_names = {
+    '190119828': 'Carla 1',
+    '190119849': 'Carla 2',
+    '190119868': 'Carla 3',
+}
+
+model_database = {
+    'Chloe': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+    'Carla': {
+        'eye_colour': 'brown',
+        'hair_colour': 'brown',
+        'body_type': 'average'
+    },
+    'Emma': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'athletic'
+    },
+    'Laurie': {
+        'eye_colour': 'green',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+}
+
+for model_name in model_database:
+    print(model_name)
+
+model_name = input("What is the model's name? ")
+
+access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZDk3NzBiNmQ4MTFhZjZhMDFmMzJkOTk3NTY4YjcxMWI3NjVmODAyMGMzMDlkMGI5OWYyMTViZTE1MWY1MWEwZjcyMmJhNzYxYjgzMmYxNmMiLCJpYXQiOjE2OTMzNDgxNTUuNzYxNTE3LCJuYmYiOjE2OTMzNDgxNTUuNzYxNTE4LCJleHAiOjE2OTU5NDAxNTUuNzUyMzAyLCJzdWIiOiIyNjMwNDg4Iiwic2NvcGVzIjpbXX0.AtPRkN38KcD3BsY-WS1hx6Mlf0TP5v8XwHGxN0Bs9WutM02lec0qCBYM5QXuWuvsxBev6RXb4tTQPt_pf6Qsdvmobeq_EH7ulG8ry0Aun7NZJTMzMbdw5x5KojLVm789vUbA8nbDf_n2jTQuPQeourBwd7DjTQtyrwgCQsC51cs0vstKtv1VkiAXCFzvWibZ2DUvOOdIDn2829uYZnFlPx4uPagK2-iUmZp-RX0T9P9fb0z5MOPG6C2IW2KhEt_5RTyTQUn-cNSGbwOBRUJ67yd1Z9HLL-ApunitFU3qPuj0lXSp9OfmfNB0cmG7PRQHxorGbOJMPLdNjC7r48yqW8yRhlKHiuPvYKpDNo8H6ZvOMMAXjfRIqSnQhZris4fXrQHKymPtwObkofiMA4eSlFwvQNMWCR0iwIB-Hriv0F-FnYn_WesdMo85TzRtpGEO-GtTrhCc00O2AdO9kj2HwwUsLhpB95e3XLU5IhL_bTCCEJYMUbLeyTeIt_0U6KkAnScfYST7DSvTVN_FPPYTOdYUhxVLv16TpN88fp6FsOM5amWpz2EvJsecGRB6_POsNCw_w6EkH4XHwSzzp-H3xhP20YU3QT6ml95HnoNrhZAvIP-yCHLT12g4mF4iyaVy89vncwUcSr20T3Wg8jNWR-6bn5LtLJ26A0AELKlUtp8"
+
+list_profiles_url = "https://dolphin-anty-api.com/browser_profiles"
+
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+API_BASE_URL = "http://localhost:3001/v1.0"
+
+def start_profile(PROFILE_ID):
+    start_url = f"{API_BASE_URL}/browser_profiles/{PROFILE_ID}/start?automation=1"
+    response = requests.get(start_url)
+    data = response.json()
+
+    if not data.get('success'):
+        raise Exception("Failed to start the Dolphin Anty profile.")
+
+    port = data['automation']['port']
+
+    driver_path = r"C:\Users\jayea\Documents\Python\Apps\Real Chromedriver\chromedriver.exe"
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'--remote-debugging-port={port}')
+    options.add_argument('--user-data-dir=./User_Data')
+    
+    service = Service(executable_path=driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+
+    debugger_address = f"localhost:{port}"
+    options.debugger_address = debugger_address
+    
+    profile_name = profile_names.get(PROFILE_ID, f"Unknown Profile {PROFILE_ID}")
+    
+    driver.get('https://www.tinder.com/')
+    wait = WebDriverWait(driver, 1000)
+    random_wait_time = random.uniform(5, 7)
+
+    time.sleep(5)
+    print(f"{profile_name} STARTING")
+    print("------------------------------------------------------------------")
+
+    try:
+        accept = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[2]/div/div/div[1]/div[1]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        accept.click()
+    except TimeoutException:
+        print(f"The privacy pop-up did not appear or the accept button was not found for {profile_name}.")
+        print("------------------------------------------------------------------")
+        return
+    
+    try:
+        create_account = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div[2]/div/div[3]/div/div/button[1]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        create_account.click()
+    except TimeoutException:
+        print(f"{profile_name} Failed clicking on create account.")
+        print("------------------------------------------------------------------")
+        return
+    
+    try:
+        phone_number_login = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/main/div/div/div[1]/div/div/div[2]/div[2]/span/div[3]/button/div[2]/div[2]/div/div')))
+        time.sleep(random_wait_time)
+        phone_number_login.click()
+    except TimeoutException:
+        print(f"{profile_name} Failed clicking on phone_number_login.")
+        print("------------------------------------------------------------------")
+        return
+    
+    API_KEY = "5nGsyb69QkbcWn52sZ9ixNZRnT2XCwBx"
+    SERVICE_NAME = "Tinder"
+    COUNTRY_CODE = "GB" 
+
+    ORDER_SMS_URL = "https://api.smspool.net/purchase/sms"
+    CHECK_SMS_URL = "https://api.smspool.net/sms/check"
+
+    def order_sms(api_key, country, service):
+        params = {
+            "key": api_key,
+            "country": country,
+            "service": service
+        }
+        response = requests.post(ORDER_SMS_URL, data=params)
+        return response.json()
+
+    def check_sms(api_key, order_id):
+        params = {
+            "key": api_key,
+            "orderid": order_id
+        }
+        response = requests.post(CHECK_SMS_URL, data=params)
+        return response.json()
+
+    order_response = order_sms(API_KEY, COUNTRY_CODE, SERVICE_NAME)
+    if order_response.get("success") == 1:
+        order_id = order_response.get("order_id")
+        phone_number = order_response.get("number")
+        
+        try:
+            phone_number_box = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[2]/div/div[2]/input')))
+            time.sleep(random_wait_time)
+            phone_number_digits = phone_number[2:]
+            phone_number_box.click() 
+            phone_number_box.send_keys(phone_number_digits) 
+        except StaleElementReferenceException:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,  '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[2]/div/div[2]/input')))
+            actions = ActionChains(driver)
+            actions.click(phone_number_box).perform()
+        except TimeoutException:
+            print(f"{profile_name} failed to click and put phone number in box")
+            print("------------------------------------------------------------------")
+            return
+
+        try:
+            send_code = driver.find_element(By.XPATH, '/html/body/div[2]/main/div/div[1]/div/div[3]/button/div[2]/div[2]')
+            time.sleep(random_wait_time)
+            send_code.click()
+        except TimeoutException:
+            print(f"{profile_name} failed to click send code button")
+            print("------------------------------------------------------------------")
+            return
+
+        #saved_progress()
+        
+        while True:
+            sms_status_response = check_sms(API_KEY, order_id)
+            sms_status = sms_status_response.get("status")
+            
+            if sms_status == 3: 
+                verification_code = sms_status_response.get("sms")
+                
+                verification_box_xpaths = [
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[1]/div[2]/input',
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[2]/div[2]/input',
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[3]/div[2]/input',
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[4]/div[2]/input',
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[5]/div[2]/input',
+                    '/html/body/div[2]/main/div/div[1]/div/div[2]/div/div[6]/div[2]/input'
+                ]
+
+                try:
+                    for i, digit in enumerate(verification_code):
+                        box_xpath = verification_box_xpaths[i]  
+                        box = driver.find_element(By.XPATH, box_xpath)  
+                        box.clear()  
+                        box.send_keys(digit)
+                        time.sleep(1.5)
+                except TimeoutException:
+                    print(f"{profile_name} failed to input the verification code")
+                    print("------------------------------------------------------------------")
+                    return
+                
+                break
+            elif sms_status == 2:  
+                print(f"{profile_name} SMS expired.")
+                break
+    else:
+        print(f"{profile_name} failed to order SMS.")
+        
+    try: 
+        phone_verify = driver.find_element(By.XPATH, '/html/body/div[2]/main/div/div[1]/div/div[4]/button/div[2]/div[2]')
+        time.sleep(random_wait_time)
+        phone_verify.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click phone_verify button")
+        print("------------------------------------------------------------------")
+        return
+
+
+    file_path = r"G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\names.txt"
+
+    with open(file_path, 'r') as file:
+        names = file.readlines()
+
+    random_name = random.choice(names).strip()
+    
+    random_number = ''.join(random.choices('0123456789', k=5))
+
+    email_domains = ["yahoo.com", "protonmail.com", "proton.me", "gmail.com", "aol.com", "hotmail.com", "outlook.com", "gmx.com"]
+    chosen_email_domain = random.choice(email_domains)
+
+    chosen_email = f"{random_name}{random_number}@{chosen_email_domain}"
+
+    try:
+        email = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/main/div/div/div[1]/div/div[2]/div[1]/div/div[2]/input')))
+        time.sleep(random_wait_time)
+        email.click()
+        email.send_keys(chosen_email)
+    except TimeoutException:
+        print(f"{profile_name} failed clicking email box")
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        continue2 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/main/div/div/div[1]/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue2.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking email box")
+        print("------------------------------------------------------------------")
+        return
+    
+    try:
+        agree = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/main/div/div[1]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        agree.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking email box")
+        print("------------------------------------------------------------------")
+        return  
+
+    try:
+        name = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div/div[2]/input')))     
+        time.sleep(random_wait_time)
+        name.click()
+        time.sleep(1)
+        name.send_keys(random_name) 
+    except TimeoutException:
+        print(f"{profile_name} failed typing in a name")
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        continue3 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue3.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue3 button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    day = random.randint(1, 28)
+
+    try:
+        dd = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div[1]/div[2]/div[2]/input')))
+        time.sleep(random_wait_time)
+        dd.click()
+        dd.send_keys(str(day))
+    except TimeoutException:
+        print(f"{profile_name} failed clicking day button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    month = random.randint(1, 12)
+
+    try:
+        mm = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div[1]/div[3]/div[2]/input')))
+        time.sleep(random_wait_time)
+        mm.click()
+        mm.send_keys(str(month))
+    except TimeoutException:
+        print(f"{profile_name} failed clicking month button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    year = random.randint(1998, 2004)
+
+    try:
+        yyyy = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div[1]/div[4]/div[2]/input')))
+        time.sleep(random_wait_time)
+        yyyy.click()
+        yyyy.send_keys(str(year))
+    except TimeoutException:
+        print(f"{profile_name} failed clicking year button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    try:
+        continue4 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue4.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue4 button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    try:
+        woman = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div/div/button[2]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        woman.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking woman button")
+        print("------------------------------------------------------------------")
+        return 
+    
+    try:
+        show_gender = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/div/div/span/input')))
+        time.sleep(random_wait_time)
+        show_gender.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking show_gender button")
+        print("------------------------------------------------------------------")
+        return  
+    
+    try:
+        continue5 = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/div/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue5.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue5 button")
+        print("------------------------------------------------------------------")
+        return  
+
+    sexual_orientation = [
+        '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div/label', #STRAIGHT
+        '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/div/div[3]/div/div/label', #LESBIAN
+        '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/div/div[4]/div/div/label'  #BISEXUAL
+    ]
+
+    random_so_index = random.randint(0, len(sexual_orientation) - 1)
+
+    while True:
+        try:
+            so_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, sexual_orientation[random_so_index])))
+            so_chosen.click()
+            break
+        except TimeoutException:
+            print(f"{profile_name} failed to select a sexual orientation")
+            print("------------------------------------------------------------------")
+            break  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(random_wait_time)
+
+    try:
+        continue6 = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue6.click()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue6 button")
+        print("------------------------------------------------------------------")
+        return  
+    
+    men_xpath = '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div/button[1]/div[2]/div[2]'
+    women_xpath = '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div/button[2]/div[2]/div[2]'
+    everyone_xpath = '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/div/button[3]/div[2]/div[2]'
+
+    if random_so_index == 0:  
+        next_option_xpath = men_xpath
+    elif random_so_index == 1:  
+        next_option_xpath = women_xpath
+    else:  
+        next_option_xpath = everyone_xpath
+
+    try:
+        men_women_everyone = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, next_option_xpath)))
+        time.sleep(random_wait_time)
+        men_women_everyone.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to select men/women/everyone option")
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        continue7 = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue7.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to select men/women/everyone option")
+        print("------------------------------------------------------------------")
+        return
+
+    passions = [f"/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/div/div[{i}]" for i in range(1, 101)]
+
+    random_passions_indices = random.sample(range(len(passions)), 5)
+
+    for index in random_passions_indices:
+        while True:
+            try:
+                passion_chosen = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, passions[index])))
+                passion_chosen.click()
+                break
+            except TimeoutException:
+                print(f"{profile_name} failed to select a passion")
+                print("------------------------------------------------------------------")
+                break
+            except ElementClickInterceptedException:
+                print("Element click intercepted. Waiting for 5 seconds...")
+                time.sleep(5)
+
+    try:
+        continue8 = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue8.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to continue8")
+        print("------------------------------------------------------------------")
+    
+    type_of_relationship = [
+        '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/ul/li[1]/button',
+        '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[1]/ul/li[2]/button',
+
+    ]
+
+    random_type_index = random.randint(0, len(type_of_relationship) - 1)
+
+    while True:
+        try:
+            type_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, type_of_relationship[random_type_index])))
+            type_chosen.click()
+            break  
+        except TimeoutException:
+            print(f"{profile_name} failed to choose a type of relationship")
+            print("------------------------------------------------------------------")
+            break  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    try:
+        continue9 = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        continue9.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to continue9")
+        print("------------------------------------------------------------------")
+    
+    try:
+        image_upload1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/input')))
+        time.sleep(random_wait_time)
+        photo_directory = f'G:/My Drive/Jays Bots/Dating Apps/Dating App Photos/{model_name}/Finished Photos'
+        photo_files1 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo1 = random.choice(photo_files1)
+        selected_photo_path1 = os.path.join(photo_directory, selected_photo1)
+        image_upload1.send_keys(selected_photo_path1)
+    except TimeoutException:
+        print(f"{profile_name} failed to upload first photo")
+        print("------------------------------------------------------------------")
+
+    try:
+        done1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/main/div/div[1]/div[2]/button[2]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        done1.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click done1")
+        print("------------------------------------------------------------------")
+
+    time.sleep(random_wait_time)
+
+    try:
+        image_upload2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/input')))
+        time.sleep(random_wait_time)
+        photo_files2 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo2 = random.choice(photo_files2)
+        selected_photo_path2 = os.path.join(photo_directory, selected_photo2)
+        image_upload2.send_keys(selected_photo_path2)
+    except TimeoutException:
+        print(f"{profile_name} failed to upload second photo")
+        print("------------------------------------------------------------------")
+
+    try:
+        done2 = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/main/div/div[1]/div[2]/button[2]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        done2.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click done2")
+        print("------------------------------------------------------------------")
+
+    time.sleep(random_wait_time)
+
+    try:
+        image_upload3 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[1]/div[2]/input')))
+        time.sleep(random_wait_time)
+        photo_files3 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo3 = random.choice(photo_files3)
+        selected_photo_path3 = os.path.join(photo_directory, selected_photo3)
+        image_upload3.send_keys(selected_photo_path3)
+    except TimeoutException:
+        print(f"{profile_name} failed to upload third photo")
+        print("------------------------------------------------------------------")
+
+    try:
+        done3 = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/main/div/div[1]/div[2]/button[2]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        done3.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click done3")
+        print("------------------------------------------------------------------")
+
+    try:
+        sign_up = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[1]/div/div/main/div/div/div[2]/div[2]/button/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        sign_up.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click sign up")
+        print("------------------------------------------------------------------")
+
+    try:
+        allow_location = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/main/div/div/div/div[3]/button[1]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        allow_location.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click allow location")
+        print("------------------------------------------------------------------")
+
+    try:
+        notifications = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/main/div/div/div/div[3]/button[2]/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        notifications.click()
+    except TimeoutException:
+        print(f"{profile_name} failed to click allow location")
+        print("------------------------------------------------------------------")
+
+
+if model_name in model_database:
+    attributes = model_database[model_name]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        list(executor.map(start_profile, profile_names))
+else:
+    print(f"Model named {model_name} not found!")
+    
+max_retries = 2
