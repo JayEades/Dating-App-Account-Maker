@@ -1,0 +1,507 @@
+import os
+import time
+import string
+import random
+import requests
+from airtable import Airtable
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException, ElementNotInteractableException, StaleElementReferenceException
+
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Dating App Accounts'
+api_key = 'keypRV2FeRUvc7Zej'
+
+airtable = Airtable(base_key, table_name, api_key)
+
+profile_names = {
+    '192972220': 'Carla 1',
+    #'192884732': 'Carla 2',
+    #'192884775': 'Carla 3',
+}
+
+model_database = {
+    'Chloe': {
+    },
+    'Carla': {
+    },
+    'Emma': {
+    },
+    'Laurie': {
+    },
+}
+
+for model_name in model_database:
+    print(model_name)
+
+model_name = input("What is the model's name? ")
+
+access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZDk3NzBiNmQ4MTFhZjZhMDFmMzJkOTk3NTY4YjcxMWI3NjVmODAyMGMzMDlkMGI5OWYyMTViZTE1MWY1MWEwZjcyMmJhNzYxYjgzMmYxNmMiLCJpYXQiOjE2OTMzNDgxNTUuNzYxNTE3LCJuYmYiOjE2OTMzNDgxNTUuNzYxNTE4LCJleHAiOjE2OTU5NDAxNTUuNzUyMzAyLCJzdWIiOiIyNjMwNDg4Iiwic2NvcGVzIjpbXX0.AtPRkN38KcD3BsY-WS1hx6Mlf0TP5v8XwHGxN0Bs9WutM02lec0qCBYM5QXuWuvsxBev6RXb4tTQPt_pf6Qsdvmobeq_EH7ulG8ry0Aun7NZJTMzMbdw5x5KojLVm789vUbA8nbDf_n2jTQuPQeourBwd7DjTQtyrwgCQsC51cs0vstKtv1VkiAXCFzvWibZ2DUvOOdIDn2829uYZnFlPx4uPagK2-iUmZp-RX0T9P9fb0z5MOPG6C2IW2KhEt_5RTyTQUn-cNSGbwOBRUJ67yd1Z9HLL-ApunitFU3qPuj0lXSp9OfmfNB0cmG7PRQHxorGbOJMPLdNjC7r48yqW8yRhlKHiuPvYKpDNo8H6ZvOMMAXjfRIqSnQhZris4fXrQHKymPtwObkofiMA4eSlFwvQNMWCR0iwIB-Hriv0F-FnYn_WesdMo85TzRtpGEO-GtTrhCc00O2AdO9kj2HwwUsLhpB95e3XLU5IhL_bTCCEJYMUbLeyTeIt_0U6KkAnScfYST7DSvTVN_FPPYTOdYUhxVLv16TpN88fp6FsOM5amWpz2EvJsecGRB6_POsNCw_w6EkH4XHwSzzp-H3xhP20YU3QT6ml95HnoNrhZAvIP-yCHLT12g4mF4iyaVy89vncwUcSr20T3Wg8jNWR-6bn5LtLJ26A0AELKlUtp8"
+
+list_profiles_url = "https://dolphin-anty-api.com/browser_profiles"
+
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+API_BASE_URL = "http://localhost:3001/v1.0"
+
+def start_profile(PROFILE_ID):
+    start_url = f"{API_BASE_URL}/browser_profiles/{PROFILE_ID}/start?automation=1"
+    response = requests.get(start_url)
+    data = response.json()
+
+    if not data.get('success'):
+        raise Exception("Failed to start the Dolphin Anty profile.")
+
+    port = data['automation']['port']
+
+    driver_path = r"C:\Users\Jay\Downloads\Python Stuff\ChromeDriver\chromedriver.exe"
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'--remote-debugging-port={port}')
+    options.add_argument('--user-data-dir=./User_Data')
+    
+    service = Service(executable_path=driver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+
+    debugger_address = f"localhost:{port}"
+    options.debugger_address = debugger_address
+    
+    profile_name = profile_names.get(PROFILE_ID, f"Unknown Profile {PROFILE_ID}")
+    
+    driver.get('https://www.bumble.com/')
+    wait = WebDriverWait(driver, 10)
+    random_wait_time = random.uniform(5, 7)
+
+    time.sleep(5)
+    print(f"{profile_name} STARTING")
+    print("------------------------------------------------------------------")
+    
+    try:
+        accept_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[title="Accept All"][aria-label="Accept All"].message-button')))
+        time.sleep(random_wait_time)
+        actions = ActionChains(driver)
+        actions.click(accept_button).perform()
+    except TimeoutException:
+        print(f"{profile_name} failed at the accept button")
+        print("------------------------------------------------------------------")
+    
+    try:
+        join = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div/main/div[1]/div/div/div/div[2]/div/div[2]/div[1]/div/div[1]/a')))
+        time.sleep(random_wait_time)
+        join.click()
+    except TimeoutException:
+        print(f"{profile_name} failed at the join button")
+        print("------------------------------------------------------------------")
+
+    try:
+        use_cell_number = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div/span')))
+        time.sleep(random_wait_time)
+        use_cell_number.click()
+    except TimeoutException:
+        print(f"{profile_name} failed at the use cell phone number button")
+        print("------------------------------------------------------------------")  
+            
+    API_KEY = "5nGsyb69QkbcWn52sZ9ixNZRnT2XCwBx"
+    SERVICE_NAME = "Bumble"
+    COUNTRY_CODE = "GB" 
+
+    ORDER_SMS_URL = "https://api.smspool.net/purchase/sms"
+    CHECK_SMS_URL = "https://api.smspool.net/sms/check"
+
+    def order_sms(api_key, country, service):
+        params = {
+            "key": api_key,
+            "country": country,
+            "service": service
+        }
+        response = requests.post(ORDER_SMS_URL, data=params)
+        return response.json()
+
+    def check_sms(api_key, order_id):
+        params = {
+            "key": api_key,
+            "orderid": order_id
+        }
+        response = requests.post(CHECK_SMS_URL, data=params)
+        return response.json()
+
+    order_response = order_sms(API_KEY, COUNTRY_CODE, SERVICE_NAME)
+    if order_response.get("success") == 1:
+        order_id = order_response.get("order_id")
+        phone_number = order_response.get("number")
+        
+        try:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div[2]/div/div[1]')))
+            time.sleep(random_wait_time)
+            phone_number_digits = phone_number[2:]
+            phone_number_box.click() 
+            phone_number_box.send_keys(phone_number_digits) 
+        except StaleElementReferenceException:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div[2]/div/div[1]')))
+            actions = ActionChains(driver)
+            actions.click(phone_number_box).perform()
+        except TimeoutException:
+            print(f"{profile_name} failed to click and put phone number in box")
+            print("------------------------------------------------------------------")
+            
+        try:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div[2]/div/div[1]')))
+            WebDriverWait(driver, 10).until(EC.visibility_of(phone_number_box))
+            phone_number_digits = phone_number[2:]
+            actions = ActionChains(driver)
+            actions.click(phone_number_box).send_keys(phone_number_digits).perform()
+        except StaleElementReferenceException:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div[2]/div/div[1]')))
+            actions = ActionChains(driver)
+            actions.click(phone_number_box).perform()
+        except ElementNotInteractableException:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[3]/div[2]/div/div[1]')))
+            driver.execute_script("arguments[0].value = arguments[1];", phone_number_box, phone_number_digits)
+        except TimeoutException:
+            print(f"{profile_name} failed to click and put phone number in box")
+            print("------------------------------------------------------------------")
+        
+        try:
+            continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[4]/button')))
+            time.sleep(random_wait_time)
+            continue_button.click()
+        except TimeoutException:
+            print(f"{profile_name} failed to click continue to send code button")
+            print("------------------------------------------------------------------")
+        
+        #saved_progress()
+        
+        while True:
+            sms_status_response = check_sms(API_KEY, order_id)
+            sms_status = sms_status_response.get("status")
+            
+            if sms_status == 3: 
+                verification_code = sms_status_response.get("sms")
+                
+                verification_box_xpaths = [
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[1]/div/input',
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[2]/div/input',
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[3]/div/input',
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[4]/div/input',
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[5]/div/input',
+                    '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[6]/div/input'
+                ]
+
+                try:
+                    for i, digit in enumerate(verification_code):
+                        box_xpath = verification_box_xpaths[i]  
+                        box = driver.find_element(By.XPATH, box_xpath)  
+                        box.clear()  
+                        box.send_keys(digit)
+                        time.sleep(1.5)
+                except TimeoutException:
+                    print(f"{profile_name} failed to input the verification code")
+                
+                break
+            elif sms_status == 2:  
+                print(f"{profile_name} SMS expired.")
+                break
+    else:
+        print(f"{profile_name} failed to order SMS.")
+        
+        try:
+            continue_button2 = driver.find_element(By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[2]/div/div[2]/button')
+            time.sleep(random_wait_time)
+            continue_button2.click()
+        except TimeoutException:
+            print(f"{profile_name} failed to click continue to send code button")
+            print("------------------------------------------------------------------")
+            
+        try:
+            #IF THIS HAPPENS, CODE IS BINS AND WILL NEED TO RUN ANOTHER ONE FROM SAME PLACE
+            robot = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'h2.header-1.text-color-black')))
+            time.sleep(random_wait_time)
+            robot.click()
+        except TimeoutException:
+            print(f"{profile_name} the robot check didn't appear")
+            print("------------------------------------------------------------------")
+            
+        try:
+            #IF THIS ALSO HAPPENS, CODE BINS
+            call_me = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.button.button--narrow.button--size-m.color-primary.button--filled')))
+            time.sleep(random_wait_time)
+            call_me.click()
+        except TimeoutException:
+            print(f"{profile_name} it didn't ask to call me")
+            print("------------------------------------------------------------------")
+            
+        file_path = r"G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\names.txt"
+
+        with open(file_path, 'r') as file:
+            names = file.readlines()
+
+        random_name = random.choice(names).strip()
+            
+        try:
+            name = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31')))
+            time.sleep(random_wait_time)
+            name.click()
+            time.sleep(1)
+            name.send_keys(random_name) 
+        except TimeoutException:
+            print(f"{profile_name} failed typing in a name")
+            print("------------------------------------------------------------------")
+            
+        try:
+            continue_button3 = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[2]/div/div[1]/button')))
+            time.sleep(random_wait_time)
+            continue_button3.click()
+        except TimeoutException:
+            print(f"{profile_name} failed to click continue3 button")
+            print("------------------------------------------------------------------")
+            
+        try:
+            month = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[1]')))
+            time.sleep(random_wait_time)
+            ActionChains(driver).move_to_element(month).click().perform()
+        except TimeoutException:
+            print(f"{profile_name} failed clicking month")
+            print("------------------------------------------------------------------")
+            
+        months = [
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[2]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[3]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[4]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[5]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[6]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[7]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[8]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[9]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[10]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[11]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[1]/div/div[3]/div/div/div/div[12]'
+    ]
+
+    random_month_index = random.randint(0, len(months) - 1)
+
+    while True:
+        try:
+            month_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, months[random_month_index])))
+            month_chosen.click()
+            break  
+        except TimeoutException:
+            print(f"{profile_name} failed to choose a month")
+            print("------------------------------------------------------------------")
+            break  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        day = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(day).click().perform()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking day")
+        print("------------------------------------------------------------------")
+
+    time.sleep(3)
+
+    days = [
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[1]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[2]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[3]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[4]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[5]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[6]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[7]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[8]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[9]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[10]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[11]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[12]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[13]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[14]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[15]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[16]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[17]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[18]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[19]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[20]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[21]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[22]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[23]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[24]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[25]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[26]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[27]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[28]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[29]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[30]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[2]/div/div[3]/div/div/div/div[31]',
+    ]
+
+    random_day_index = random.randint(0, len(days) - 1)
+
+    while True:
+        try:
+            day_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, days[random_day_index])))
+            day_chosen.click()
+            break 
+        except TimeoutException:
+            print(f"{profile_name} failed to choose a day")
+            print("------------------------------------------------------------------")
+            break  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        year = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(year).click().perform()
+    except TimeoutException:
+        print(f"{profile_name} failed clicking year")
+        print("------------------------------------------------------------------")
+
+    time.sleep(3)
+
+    years = [
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[8]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[9]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[10]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[11]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[12]',
+        '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div[1]/div/div[3]/div/div[3]/div/div/div/div[13]'
+    ]
+
+    random_years_index = random.randint(0, len(years) - 1)
+
+    while True:
+        try:
+            years_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, years[random_years_index])))
+            years_chosen.click()
+            break  
+        except TimeoutException:
+            print(f"{profile_name} failed to choose a year")
+            print("------------------------------------------------------------------")
+            break  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        continue_button4 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[2]/div/div[1]/button')))
+        time.sleep(random_wait_time)
+        continue_button4.click() 
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue4")
+        print("------------------------------------------------------------------")
+        
+    try:
+        woman = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[1]/div/div/div[1]/label')))
+        time.sleep(random_wait_time)
+        woman.click() 
+    except TimeoutException:
+        print(f"{profile_name} failed clicking woman")
+        print("------------------------------------------------------------------")
+        
+    try:
+        continue_button5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[3]/form/div[2]/div/div[1]/button')))
+        time.sleep(random_wait_time)
+        continue_button5.click() 
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue5")
+        print("------------------------------------------------------------------")
+                
+    try:
+        image_upload1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[4]/form/div[1]/div/div[1]/div/div/div/label/input')))
+        time.sleep(random_wait_time)
+        photo_directory = f'G:/My Drive/Jays Bots/Dating Apps/Dating App Photos/{model_name}/Finished Photos'
+        photo_files1 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo1 = random.choice(photo_files1)
+        selected_photo_path1 = os.path.join(photo_directory, selected_photo1)
+        image_upload1.send_keys(selected_photo_path1)
+    except TimeoutException:
+        print(f"{profile_name} failed to upload first photo")
+        print("------------------------------------------------------------------")
+        
+    try:
+        image_upload2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[4]/form/div[1]/div/div[1]/div[2]/div/div/label/input')))
+        time.sleep(random_wait_time)
+        photo_files2 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo2 = random.choice(photo_files2)
+        selected_photo_path2 = os.path.join(photo_directory, selected_photo2)
+        image_upload2.send_keys(selected_photo_path2)
+    except TimeoutException:
+        print(f"{profile_name} failed to upload second photo")
+        print("------------------------------------------------------------------")
+        
+    try:
+        continue_button6 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[4]/form/div[3]/div')))   
+        time.sleep(random_wait_time)
+        continue_button6.click() 
+    except TimeoutException:
+        print(f"{profile_name} failed clicking continue6")
+        print("------------------------------------------------------------------")     
+        
+    try:
+        location = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/div/div[5]/form/div/div')))
+        time.sleep(random_wait_time)
+        location.click() 
+    except TimeoutException:
+        print(f"{profile_name} failed clicking allow location")
+        print("------------------------------------------------------------------")
+        
+    try:
+        #if this happens do a backspace
+        get_verified = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[2]/main/section/div/div[3]/div')))
+        time.sleep(random_wait_time)
+        get_verified.click() 
+    except TimeoutException:
+        print(f"{profile_name} get verified button didn't appear")
+        print("------------------------------------------------------------------")
+        
+    try:
+        date = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div/div[1]/div[1]/main/section/div/div[3]/div')))
+        time.sleep(random_wait_time)
+        date.click() 
+    except TimeoutException:
+        print(f"{profile_name} date page didnt appear/button wasnt found")
+        print("------------------------------------------------------------------")           
+        
+                    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+if model_name in model_database:
+    attributes = model_database[model_name]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        list(executor.map(start_profile, profile_names))
+else:
+    print(f"Model named {model_name} not found!")
+    
+max_retries = 2
