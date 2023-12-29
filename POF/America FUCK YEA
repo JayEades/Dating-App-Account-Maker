@@ -1,0 +1,1741 @@
+import os
+import json
+import time
+import string
+import random
+import requests
+from airtable import Airtable
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, StaleElementReferenceException
+
+base_key = 'appoAPLSKzDQR3uaD'
+table_name = 'Dating App Accounts'
+api_key = 'keypRV2FeRUvc7Zej'
+
+airtable = Airtable(base_key, table_name, api_key)
+
+profile_names = {
+    '198658341': 'TEST',
+    #'190119849': 'Carla 2',
+    #'190119868': 'Carla 3',
+}
+
+model_database = {
+    'Chloe': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+    'Carla': {
+        'eye_colour': 'brown',
+        'hair_colour': 'brown',
+        'body_type': 'average'
+    },
+    'Emma': {
+        'eye_colour': 'blue',
+        'hair_colour': 'blonde',
+        'body_type': 'athletic'
+    },
+    'Laurie': {
+        'eye_colour': 'green',
+        'hair_colour': 'blonde',
+        'body_type': 'thin'
+    },
+}
+
+for model_name in model_database:
+    print(model_name)
+
+model_name = input("What is the model's name? ")
+
+access_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZDk3NzBiNmQ4MTFhZjZhMDFmMzJkOTk3NTY4YjcxMWI3NjVmODAyMGMzMDlkMGI5OWYyMTViZTE1MWY1MWEwZjcyMmJhNzYxYjgzMmYxNmMiLCJpYXQiOjE2OTMzNDgxNTUuNzYxNTE3LCJuYmYiOjE2OTMzNDgxNTUuNzYxNTE4LCJleHAiOjE2OTU5NDAxNTUuNzUyMzAyLCJzdWIiOiIyNjMwNDg4Iiwic2NvcGVzIjpbXX0.AtPRkN38KcD3BsY-WS1hx6Mlf0TP5v8XwHGxN0Bs9WutM02lec0qCBYM5QXuWuvsxBev6RXb4tTQPt_pf6Qsdvmobeq_EH7ulG8ry0Aun7NZJTMzMbdw5x5KojLVm789vUbA8nbDf_n2jTQuPQeourBwd7DjTQtyrwgCQsC51cs0vstKtv1VkiAXCFzvWibZ2DUvOOdIDn2829uYZnFlPx4uPagK2-iUmZp-RX0T9P9fb0z5MOPG6C2IW2KhEt_5RTyTQUn-cNSGbwOBRUJ67yd1Z9HLL-ApunitFU3qPuj0lXSp9OfmfNB0cmG7PRQHxorGbOJMPLdNjC7r48yqW8yRhlKHiuPvYKpDNo8H6ZvOMMAXjfRIqSnQhZris4fXrQHKymPtwObkofiMA4eSlFwvQNMWCR0iwIB-Hriv0F-FnYn_WesdMo85TzRtpGEO-GtTrhCc00O2AdO9kj2HwwUsLhpB95e3XLU5IhL_bTCCEJYMUbLeyTeIt_0U6KkAnScfYST7DSvTVN_FPPYTOdYUhxVLv16TpN88fp6FsOM5amWpz2EvJsecGRB6_POsNCw_w6EkH4XHwSzzp-H3xhP20YU3QT6ml95HnoNrhZAvIP-yCHLT12g4mF4iyaVy89vncwUcSr20T3Wg8jNWR-6bn5LtLJ26A0AELKlUtp8"
+
+list_profiles_url = "https://dolphin-anty-api.com/browser_profiles"
+
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+API_BASE_URL = "http://localhost:3001/v1.0"
+
+def send_to_discord(message):
+    url = 'https://discord.com/api/webhooks/1182026458856697887/B1TYqJEgUebyL71KhxReF3kDwRnAtqvO9mpto68dIMvrFwO_2Bpr5yaoLTsEKyCEPIBu'  
+    data = {
+        'content': message,
+        'username': 'Message Sender'
+    }
+    result = requests.post(url, data=json.dumps(data), headers={"Content-Type": "application/json"})
+    try:
+        result.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        print(err)
+    else:
+        print("Payload delivered successfully, code {}.".format(result.status_code))
+        
+def start_profile(PROFILE_ID):
+    start_url = f"{API_BASE_URL}/browser_profiles/{PROFILE_ID}/start?automation=1"
+    response = requests.get(start_url)
+    data = response.json()
+
+    if not data.get('success'):
+        raise Exception("Failed to start the Dolphin Anty profile.")
+
+    port = data['automation']['port']
+
+    driver_path = r"C:\Users\jayea\Documents\Python\Apps\Real Chromedriver\chromedriver.exe"
+    options = webdriver.ChromeOptions()
+    options.add_argument(f'--remote-debugging-port={port}')
+    options.add_argument('--user-data-dir=./User_Data')
+    
+    service = Service(executable_path=driver_path)
+
+    chosen_country = input("Choose a country (US/UK): ").strip().upper()
+
+    driver = webdriver.Chrome(service=service, options=options)
+
+    debugger_address = f"localhost:{port}"
+    options.debugger_address = debugger_address
+    
+    profile_name = profile_names.get(PROFILE_ID, f"Unknown Profile {PROFILE_ID}")
+    
+    driver.get('https://www.pof.com/')
+    wait = WebDriverWait(driver, 1000)
+    random_wait_time = random.uniform(5, 7)
+
+    time.sleep(5)
+    start_message = f"@everyone {profile_name} STARTING"
+    send_to_discord(start_message)
+    print("------------------------------------------------------------------")
+
+    try:
+        accept = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler')))
+        time.sleep(random_wait_time)
+        accept.click()
+    except TimeoutException:
+        accept_message = f"@everyone The 'accept' button was not found for {profile_name}."
+        send_to_discord(accept_message)
+        print("------------------------------------------------------------------")
+        try:
+            choices = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button')))
+            time.sleep(random_wait_time)
+            choices.click()
+        except TimeoutException:
+            choices_message = f"@everyone The 'choices' button was not found for {profile_name}."
+            send_to_discord(choices_message)
+            print("------------------------------------------------------------------")
+            try:
+                accept_all = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[4]/div[3]/div/div[3]/div[1]/button[2]')))
+                time.sleep(random_wait_time)
+                accept_all.click()
+            except TimeoutException:
+                accept_all = f"@everyone The 'accept_all' button was not found for {profile_name}."
+                send_to_discord(accept_all)
+                print("------------------------------------------------------------------")
+
+    try: 
+        sign_up = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.css-pio7a5')))
+        time.sleep(random_wait_time)
+        sign_up.click()
+    except TimeoutException:
+        sign_up_message = f"@everyone {profile_name} failed clicking the sign-up button"
+        send_to_discord(sign_up_message)
+        print("------------------------------------------------------------------")
+        return
+
+    file_path = r"G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\names.txt"
+
+    with open(file_path, 'r') as file:
+        names = file.readlines()
+
+    random_name = random.choice(names).strip()
+    
+    try:
+        accept = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#onetrust-accept-btn-handler')))
+        time.sleep(random_wait_time)
+        accept.click()
+    except TimeoutException:
+        accept_message = f"@everyone The privacy pop-up did not appear or the accept button was not found for {profile_name}."
+        send_to_discord(accept_message)
+        print("------------------------------------------------------------------")
+
+    try:
+        pencil = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,  "/html/body/div[1]/div[1]/div[2]/div/main/div/div/div/div[2]/div/div/div[2]/div")))
+        time.sleep(random_wait_time)
+        pencil.click()
+    except TimeoutException:
+        pass
+
+    try:
+        name = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31')))
+        time.sleep(random_wait_time)
+        name.click()
+        time.sleep(1)
+        name.send_keys(random_name) 
+    except TimeoutException:
+        name_message = f"@everyone {profile_name} failed typing in a name"
+        send_to_discord(name_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        sign_up2 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button#registration-next')))
+        time.sleep(random_wait_time)
+        sign_up2.click()
+    except TimeoutException:
+        signup2_message = f"@everyone {profile_name} failed clicking the second sign up button, sign_up2"
+        send_to_discord(signup2_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        woman = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/div/div[1]/div[2]')))
+        time.sleep(random_wait_time)
+        woman.click()
+    except TimeoutException:
+        woman_message = f"@everyone {profile_name} failed choosing woman"
+        send_to_discord(woman_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next1 = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button.MuiButtonBase-root.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-fullWidth.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-fullWidth.css-uzb1jv.css-pio7a5')))
+        time.sleep(random_wait_time)
+        next1.click()
+    except TimeoutException:
+        next1_message = f"@everyone {profile_name} failed clicking next1 button"
+        send_to_discord(next1_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        caucasian_button = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/div/div/div[4]/span[1]')))
+        time.sleep(random_wait_time)
+        caucasian_button.click()
+    except TimeoutException:
+        caucasian_message = f"@everyone {profile_name} failed choosing caucasian"
+        send_to_discord(caucasian_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[2]/div[2]/button')))
+        time.sleep(random_wait_time)
+        next2.click()
+    except TimeoutException:
+        next2_message = f"@everyone {profile_name} failed clicking next2 button"
+        send_to_discord(next2_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        month = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[1]/label/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(month).click().perform()
+    except TimeoutException:
+        month_message = f"@everyone {profile_name} failed clicking month"
+        send_to_discord(month_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(3)
+
+    months = [
+        '/html/body/div[4]/div[3]/ul/li[2]',
+        '/html/body/div[4]/div[3]/ul/li[3]',
+        '/html/body/div[4]/div[3]/ul/li[4]',
+        '/html/body/div[4]/div[3]/ul/li[5]',
+        '/html/body/div[4]/div[3]/ul/li[6]',
+        '/html/body/div[4]/div[3]/ul/li[7]',
+        '/html/body/div[4]/div[3]/ul/li[8]',
+        '/html/body/div[4]/div[3]/ul/li[9]',
+        '/html/body/div[4]/div[3]/ul/li[10]',
+        '/html/body/div[4]/div[3]/ul/li[11]',
+        '/html/body/div[4]/div[3]/ul/li[12]',
+        '/html/body/div[4]/div[3]/ul/li[13]'
+    ]
+
+    random_month_index = random.randint(0, len(months) - 1)
+
+    while True:
+        try:
+            month_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, months[random_month_index])))
+            month_chosen.click()
+            break  
+        except TimeoutException:
+            month_chosen_message = f"@everyone {profile_name} failed to choose a month"
+            send_to_discord(month_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        day = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[2]/label/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(day).click().perform()
+    except TimeoutException:
+        day_message = f"@everyone {profile_name} failed clicking day"
+        send_to_discord(day_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(3)
+
+    days = [
+        '/html/body/div[4]/div[3]/ul/li[2]',
+        '/html/body/div[4]/div[3]/ul/li[3]',
+        '/html/body/div[4]/div[3]/ul/li[4]',
+        '/html/body/div[4]/div[3]/ul/li[5]',
+        '/html/body/div[4]/div[3]/ul/li[6]',
+        '/html/body/div[4]/div[3]/ul/li[7]',
+        '/html/body/div[4]/div[3]/ul/li[8]',
+        '/html/body/div[4]/div[3]/ul/li[9]',
+        '/html/body/div[4]/div[3]/ul/li[10]',
+        '/html/body/div[4]/div[3]/ul/li[11]',
+        '/html/body/div[4]/div[3]/ul/li[12]',
+        '/html/body/div[4]/div[3]/ul/li[13]',
+        '/html/body/div[4]/div[3]/ul/li[14]',
+        '/html/body/div[4]/div[3]/ul/li[15]',
+        '/html/body/div[4]/div[3]/ul/li[16]',
+        '/html/body/div[4]/div[3]/ul/li[17]',
+        '/html/body/div[4]/div[3]/ul/li[18]',
+        '/html/body/div[4]/div[3]/ul/li[19]',
+        '/html/body/div[4]/div[3]/ul/li[20]',
+        '/html/body/div[4]/div[3]/ul/li[21]',
+        '/html/body/div[4]/div[3]/ul/li[22]',
+        '/html/body/div[4]/div[3]/ul/li[23]',
+        '/html/body/div[4]/div[3]/ul/li[24]',
+        '/html/body/div[4]/div[3]/ul/li[25]',
+        '/html/body/div[4]/div[3]/ul/li[26]',
+        '/html/body/div[4]/div[3]/ul/li[27]',
+        '/html/body/div[4]/div[3]/ul/li[28]',
+        '/html/body/div[4]/div[3]/ul/li[29]',
+        '/html/body/div[4]/div[3]/ul/li[30]',
+        '/html/body/div[4]/div[3]/ul/li[31]',
+        '/html/body/div[4]/div[3]/ul/li[32]',
+    ]
+
+    random_day_index = random.randint(0, len(days) - 1)
+
+    while True:
+        try:
+            day_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, days[random_day_index])))
+            day_chosen.click()
+            break 
+        except TimeoutException:
+            day_chosen_message = f"@everyone {profile_name} failed to choose a day"
+            send_to_discord(day_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        year = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[3]/label/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(year).click().perform()
+    except TimeoutException:
+        year_message = f"@everyone {profile_name} failed clicking year"
+        send_to_discord(year_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(3)
+
+    years = [
+        '/html/body/div[4]/div[3]/ul/li[21]',
+        '/html/body/div[4]/div[3]/ul/li[22]',
+        '/html/body/div[4]/div[3]/ul/li[23]',
+        '/html/body/div[4]/div[3]/ul/li[24]',
+        '/html/body/div[4]/div[3]/ul/li[25]',
+        '/html/body/div[4]/div[3]/ul/li[26]'
+    ]
+
+    random_years_index = random.randint(0, len(years) - 1)
+
+    while True:
+        try:
+            years_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, years[random_years_index])))
+            years_chosen.click()
+            break  
+        except TimeoutException:
+            years_chosen_message = f"@everyone {profile_name} failed to choose a year"
+            send_to_discord(years_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    try:
+        next3 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[4]/div[2]/button')))
+        time.sleep(random_wait_time)
+        next3.click() 
+    except TimeoutException:
+        next3_message = f"@everyone {profile_name} failed clicking next3"
+        send_to_discord(next3_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        country = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div/label/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(country).click().perform()
+    except TimeoutException:
+        print("Timeout when selecting country")
+        return
+
+    time.sleep(random_wait_time)
+
+    if chosen_country == "UK":
+        country_xpath = '/html/body/div[4]/div[3]/ul/li[72]' 
+        scroll_amount = 70  
+    elif chosen_country == "US":
+        country_xpath = '/html/body/div[4]/div[3]/ul/li[2]'
+        scroll_amount = 0
+    else:
+        print("Invalid country selection")
+        return
+
+    try:
+        country_box = driver.find_element(By.XPATH, '/html/body/div[4]/div[3]')
+        for _ in range(scroll_amount):
+            country_box.send_keys(Keys.ARROW_DOWN)
+            time.sleep(0.2)
+    except TimeoutException:
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        country_chosen = wait.until(EC.presence_of_element_located((By.XPATH, country_xpath)))
+        time.sleep(random_wait_time)
+        country_chosen.click()
+    except TimeoutException:
+        print("Timeout when clicking on country")
+        return
+
+    try:
+        state = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[1]/div[2]/label/div/div[1]')))
+        time.sleep(random_wait_time)
+        ActionChains(driver).move_to_element(state).click().perform()
+    except TimeoutException:
+        print("------------------------------------------------------------------")
+        return
+
+    if chosen_country == "UK":
+        states = [
+        '/html/body/div[4]/div[3]/ul/li[2]',  # England
+        '/html/body/div[4]/div[3]/ul/li[2]',  # England (duplicate to increase likelihood)
+        '/html/body/div[4]/div[3]/ul/li[2]',  # England (duplicate to increase likelihood)
+        '/html/body/div[4]/div[3]/ul/li[3]',  # Northern Ireland
+        '/html/body/div[4]/div[3]/ul/li[4]',  # Scotland
+        '/html/body/div[4]/div[3]/ul/li[5]'   # Wales
+    ]
+        state_names = ['England', 'England', 'England', 'Ireland', 'Scotland', 'Wales']
+
+        
+    elif chosen_country == "US":
+        states = [
+        '/html/body/div[4]/div[3]/ul/li[2]',  # Alabama
+        '/html/body/div[4]/div[3]/ul/li[3]',  # Alaska 
+        '/html/body/div[4]/div[3]/ul/li[5]',  # Arizona 
+        '/html/body/div[4]/div[3]/ul/li[6]',  # Arkansas
+    ]
+        state_names = ['Alabama', 'Alaska', 'Arizona', 'Arkansas']
+
+    while True:
+        try:
+            random_state_index = random.randint(0, len(states) - 1)
+            states_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, states[random_state_index])))
+            states_chosen.click()
+            break 
+        except TimeoutException:
+            print("------------------------------------------------------------------")
+            return 
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(2)
+
+    chosen_state = state_names[random_state_index]
+
+    city_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\Countries\{}\{}_cities.txt'.format(chosen_state.lower().replace(" ", "_"), chosen_state.lower().replace(" ", "_"))
+    with open(city_file_path, 'r') as file:
+        cities = file.readlines()
+
+    chosen_city = random.choice(cities).strip()
+
+    try:
+        city = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="City"][type="text"]')))
+        time.sleep(random_wait_time)
+        city.click()
+        city.send_keys(chosen_city)
+    except TimeoutException:
+        city_message = f"@everyone {profile_name} failed clicking city box"
+        send_to_discord(city_message)
+        print("------------------------------------------------------------------")
+        return
+
+    postcodes_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\Countries\{}\Postcode Files\{}_{}_postcodes.txt'.format(chosen_state.lower().replace(" ", "_"), chosen_state.lower().replace(" ", "_"), chosen_city.lower().replace(" ", "_"))
+
+    with open(postcodes_file_path, 'r') as file:
+        postcodes = file.readlines()
+
+    chosen_postcode = random.choice(postcodes).strip()
+
+    try:
+        postcode = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Postal Code / ZIP"][type="text"]')))
+        time.sleep(random_wait_time)
+        postcode.click()
+        postcode.send_keys(chosen_postcode)
+    except TimeoutException:
+        postcode_message = f"@everyone {profile_name} failed clicking postcode box"
+        send_to_discord(postcode_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next4 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/div[1]/div[2]/div/main/div/div/div[2]/div/div[3]/div[2]/button')))
+        time.sleep(random_wait_time)
+        next4.click()
+    except TimeoutException:
+        next4_message = f"@everyone {profile_name} failed clicking next4 box"
+        send_to_discord(next4_message)
+        print("------------------------------------------------------------------")
+        return
+
+    random_number = ''.join(random.choices('0123456789', k=5))
+
+    email_domains = ["yahoo.com", "protonmail.com", "proton.me", "gmail.com", "aol.com", "hotmail.com", "outlook.com", "gmx.com"]
+    chosen_email_domain = random.choice(email_domains)
+
+    chosen_email = f"{random_name}{random_number}@{chosen_email_domain}"
+
+    try:
+        email = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Email"][type="email"]')))
+        time.sleep(random_wait_time)
+        email.click()
+        email.send_keys(chosen_email)
+    except TimeoutException:
+        email_message = f"@everyone {profile_name} failed clicking email box"
+        send_to_discord(email_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        confirm_email = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[placeholder="Confirm email"][type="email"]')))
+        time.sleep(random_wait_time)
+        confirm_email.click()
+        confirm_email.send_keys(chosen_email)
+    except TimeoutException:
+        confirm_email_message = f"@everyone {profile_name} failed clicking confirm email box"
+        send_to_discord()
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[2]/div[2]/button')))
+        time.sleep(random_wait_time)
+        next5.click()
+    except TimeoutException:
+        next5_message = f"@everyone {profile_name} failed clicking next5 box"
+        send_to_discord(next5_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        #INCASE NEED TO EVER CONFIRM EMAILS
+        element_present = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'xpath_here')))
+        
+        driver.execute_script("window.open('', '_blank');")
+        driver.switch_to.window(driver.window_handles[1])
+        driver.get("https://www.google.com")
+        driver.switch_to.window(driver.window_handles[0])
+
+    except TimeoutException:
+        pass
+
+    random_number = ''.join(random.choices('0123456789', k=5))
+    username = f"{random_name}{random_number}"
+
+    password_length = 10
+    password_characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.choice(password_characters) for _ in range(password_length))
+
+    time.sleep(random_wait_time)
+    
+    try:
+        username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="text"][placeholder="Username"]')))
+        username_input.click()
+        username_input.send_keys(username)
+    except TimeoutException:
+        username_message = f"@everyone {profile_name} failed clicking username box"
+        send_to_discord(username_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    try:
+        password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="password"][placeholder="Password"]')
+        password_input.click()
+    except TimeoutException:
+        password_input_message = f"@everyone {profile_name} failed clicking password box"
+        send_to_discord(password_input_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    try:
+        error_message = driver.find_element(By.CSS_SELECTOR, 'p.css-qwa1si')
+        if "That username is already taken." in error_message.text:
+            new_random_number = ''.join(random.choices('0123456789', k=5))
+            new_username = f"{random_name}{new_random_number}"
+
+            username_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="text"][placeholder="Username"]')))
+            time.sleep(random_wait_time)
+            username_input.click()
+
+            username_input.send_keys(Keys.END)  
+            username_input.send_keys(Keys.SHIFT + Keys.HOME)  
+            username_input.send_keys(Keys.BACKSPACE)  
+
+            username_input.send_keys(new_username)
+            time.sleep(random_wait_time)
+
+    except NoSuchElementException:
+        pass
+
+    try:
+        password_input.click()
+        password_input.send_keys(password)
+        time.sleep(random_wait_time)
+    except TimeoutException:
+        password_input_message = f"@everyone {profile_name} failed clicking password box/writing password"
+        send_to_discord(password_input_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        confirm_password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="password"][placeholder="Confirm password"]')
+        confirm_password_input.click()
+        confirm_password_input.send_keys(password)
+    except TimeoutException:
+        confirm_password_message = f"@everyone {profile_name} failed confirming password"
+        send_to_discord(confirm_password_message)
+        print("------------------------------------------------------------------")
+        return
+        
+    time.sleep(random_wait_time)
+
+    try:
+        next6 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+        time.sleep(random_wait_time)
+        next6.click()
+    except TimeoutException:
+        next6_message = f"@everyone {profile_name} failed clicking next6 box, clicking password box"
+        send_to_discord(next6_message)
+        print("------------------------------------------------------------------")
+
+        try:
+            password_input = driver.find_element(By.CSS_SELECTOR, 'input.MuiInputBase-input.css-mnn31[type="password"][placeholder="Password"]')
+            password_input.click()
+        except Exception as e:
+            password_input_message = f"@everyone {profile_name} Failed to click the password input on retry"
+            send_to_discord(password_input_message)
+            print("------------------------------------------------------------------")
+
+        try:
+            next6 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+            time.sleep(random_wait_time)
+            next6.click()
+        except TimeoutException:
+            next6_message = f"@everyone {profile_name} failed clicking next6 box on retry"
+            send_to_discord(next6_message)
+            print("------------------------------------------------------------------")
+            return
+    
+    time.sleep(10)
+    
+    halfway_message = f"@everyone {profile_name} has made it halfway"
+    send_to_discord(halfway_message)
+    print("------------------------------------------------------------------")
+    
+    #saved_progress()
+
+    try:
+        error_message = driver.find_element(By.CSS_SELECTOR, 'p[aria-live="polite"][id="-input-pair-error-helper"].css-qwa1si[style="display: block;"]')
+
+        new_chosen_email = f"{random_name}{random_number}@{chosen_email_domain}"
+        email.click()
+        email.clear()
+        email.send_keys(new_chosen_email)
+        confirm_email.clear()
+        confirm_email.send_keys(new_chosen_email)
+
+        next5 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[2]/div/main/div/div/div[2]/div/div[2]/div[2]/button')))
+        time.sleep(random_wait_time)
+        next5.click()
+
+    except NoSuchElementException:
+        pass
+
+    time.sleep(random_wait_time)                                 
+
+    try:
+        lets_go = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'MuiButton-containedPrimary')))
+        time.sleep(random_wait_time)
+        lets_go.click()
+    except TimeoutException:
+        lets_go_message = f"@everyone {profile_name} failed to click lets go box"
+        send_to_discord(lets_go_message)
+        print("------------------------------------------------------------------")
+        return
+    except StaleElementReferenceException:
+        try:
+            lets_go = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'MuiButton-containedPrimary')))
+            actions = ActionChains(driver)
+            actions.click(lets_go).perform()
+        except TimeoutException:
+            lets_go_message = f"@everyone {profile_name} failed to click lets go box"
+            send_to_discord(lets_go_message)
+            print("------------------------------------------------------------------")
+            return
+        
+    #saved_progress()
+
+    try:
+        men = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)                                 
+        men.click()
+    except TimeoutException:
+        men_message = f"@everyone {profile_name} failed clicking men box"
+        send_to_discord(men_message)
+        print("------------------------------------------------------------------")
+
+    
+    #saved_progress()
+
+    type_of_relationship = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[2]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]'
+    ]
+
+    random_type_index = random.randint(0, len(type_of_relationship) - 1)
+
+    while True:
+        try:
+            type_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, type_of_relationship[random_type_index])))
+            type_chosen.click()
+            break  
+        except TimeoutException:
+            type_chosen_message = f"@everyone {profile_name} failed to choose a type of relationship"
+            send_to_discord(type_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+        
+    time.sleep(random_wait_time)                                 
+
+    your_intent = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[3]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[4]'
+    ]
+
+    random_intent_index = random.randint(0, len(your_intent) - 1)
+
+    while True:
+        try:
+            intent_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, your_intent[random_intent_index])))
+            intent_chosen.click()
+            break  
+        except TimeoutException:
+            intent_message = f"@everyone {profile_name} failed to choose an intent"
+            send_to_discord(intent_chosen)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(random_wait_time)                                 
+
+    driver.execute_script("window.scrollBy(0, 200);")
+    driver.execute_script("window.scrollBy(0, 200);")
+    driver.execute_script("window.scrollBy(0, 200);")
+
+
+    smokers = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[2]'
+    ]
+
+    random_smokers_index = random.randint(0, len(smokers) - 1)
+
+    while True:
+        try:
+            smoker_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, smokers[random_smokers_index])))
+            smoker_chosen.click()
+            break  
+        except TimeoutException:
+            smoker_message = f"@everyone {profile_name} failed to select a smoking preference"
+            send_to_discord(smoker_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(random_wait_time)                                 
+
+    kids = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[1]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[2]'
+    ]
+
+    random_kids_index = random.randint(0, len(kids) - 1)
+
+    while True:
+        try:
+            kids_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, kids[random_kids_index])))
+            kids_chosen.click()
+            break
+        except TimeoutException:
+            kids_message = f"@everyone {profile_name} failed to select a number of kids"
+            send_to_discord(kids_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(random_wait_time)
+
+    try:
+        next7 = driver.find_element(By.CLASS_NAME, 'MuiButton-containedPrimary')
+        time.sleep(random_wait_time)
+        next7.click()
+    except TimeoutException:
+        next7_message = f"@everyone {profile_name} failed clicking next7 box"
+        send_to_discord(next7_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    occupation_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\occupations.txt'
+    with open(occupation_file_path, 'r') as file:
+        occupations = file.readlines()
+
+    chosen_occupation = random.choice(occupations).strip()
+
+    try:
+        occupation = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input#createprofile-profession-input[placeholder="Occupation"][type="text"]')))
+        time.sleep(random_wait_time)
+        occupation.click()
+        occupation.send_keys(chosen_occupation)
+    except TimeoutException:
+        occupation_message = f"@everyone {profile_name} failed clicking occupation box"
+        send_to_discord(occupation_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    education = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[1]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[2]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div/div[2]/div[3]'
+    ]
+
+    random_education_index = random.randint(0, len(education) - 1)
+
+    while True:
+        try:
+            education_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, education[random_education_index])))
+            education_chosen.click()
+            break
+        except TimeoutException:
+            education_message = f"@everyone {profile_name} failed to select the education"
+            send_to_discord(education_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+            
+    time.sleep(random_wait_time)
+    
+    random_number = random.choice([2, 3])
+    random_number2 = random.choice([3, 4])
+
+    try:
+        slider1 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-ambition-select")))
+        slider_width1 = slider1.size['width']
+        offset = slider_width1 / random_number
+        slider_handle1 = slider1.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
+        action = ActionChains(driver)
+        action.click_and_hold(slider_handle1).move_by_offset(offset, 0).release().perform()
+    except TimeoutException:
+        slider1_message = f"@everyone {profile_name} failed to slide for ambition"
+        send_to_discord(slider1_message)
+        print("------------------------------------------------------------------")
+        return
+
+    driver.execute_script("window.scrollBy(0, 200);")
+
+    income = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[2]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[3]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div/div[2]/div[4]'
+    ]
+
+    random_income_index = random.randint(0, len(income) - 1)
+    income_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, income[random_income_index])))
+
+    while True:
+        try:
+            income_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, income[random_income_index])))
+            income_chosen.click()
+            break
+        except TimeoutException:
+            income_message = f"@everyone {profile_name} failed to select the income"
+            send_to_discord(income_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    time.sleep(random_wait_time)
+
+    driver.execute_script("window.scrollBy(0, 200);")
+    driver.execute_script("window.scrollBy(0, 200);")
+
+    time.sleep(random_wait_time)
+
+    try:
+        religion = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        religion.click()
+    except TimeoutException:
+        religion_message = f"@everyone {profile_name} failed to select the religion"
+        send_to_discord(religion_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    try:
+        second_language = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        second_language.click()
+    except TimeoutException:
+        second_lang_message = f"@everyone {profile_name} failed to select the second language"
+        send_to_discord(second_lang_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    try:
+        next8 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next8.click()
+    except TimeoutException:
+        next8_message = f"@everyone {profile_name} failed to select the next8 button"
+        send_to_discord(next8_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    try:
+        marry = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        marry.click()
+    except TimeoutException:
+        marry_message = f"@everyone {profile_name} failed on marry"
+        send_to_discord(marry_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    try:
+        slider2 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-longestrelationship-select")))
+        slider_width2 = slider2.size['width']
+        offset = slider_width2 / random_number2
+        slider_handle2 = slider2.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
+        action = ActionChains(driver)
+        action.click_and_hold(slider_handle2).move_by_offset(offset, 0).release().perform()
+    except TimeoutException:
+        slider2_message = f"@everyone {profile_name} failed on slider2 for longest relationship"
+        send_to_discord(slider2_message)
+        print("------------------------------------------------------------------")
+        return
+
+    time.sleep(random_wait_time)
+
+    eye_colour = {
+    'blue':'/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]', #Blue 
+    'brown': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[4]', #Brown
+    'green':'/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[5]'  #Green
+    }
+
+    eye_colour_xpath = eye_colour[attributes['eye_colour']]
+    try:
+        wait.until(EC.presence_of_element_located((By.XPATH, eye_colour_xpath))).click()
+    except TimeoutException:
+        eye_colour_message = f"@everyone {profile_name} failed to select an eye colour"
+        send_to_discord(eye_colour_message)
+        print("------------------------------------------------------------------")
+        return
+
+    hair_colour = {
+        'black': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]', #Black
+        'blonde': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[2]', #Blonde
+        'brown': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[3]', #Brown
+        'red': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[4]'  #Red
+    }
+
+    hair_colour_xpath = hair_colour[attributes['hair_colour']]
+    try:
+        wait.until(EC.presence_of_element_located((By.XPATH, hair_colour_xpath))).click()
+    except TimeoutException:
+        hair_colour_message = f"@everyone {profile_name} failed to select a hair colour"
+        send_to_discord(hair_colour_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        slider3 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-height-select")))
+        slider_width3 = slider3.size['width']
+        offset = slider_width3 / random_number2  
+        slider_handle3 = slider3.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
+        action = ActionChains(driver)
+        action.click_and_hold(slider_handle3).move_by_offset(offset, 0).release().perform()
+    except TimeoutException:
+        slider3_message = f"@everyone {profile_name} failed on slider3 for height"
+        send_to_discord(slider3_message)
+        print("------------------------------------------------------------------")
+        return
+
+
+    body_type = {
+        'thin': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[2]', #Thin
+        'athletic': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[3]', #Athletic
+        'average': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[4]', #Average
+        'curvy': '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[6]/div/div/div[2]/div[5]'  #Curvy
+    }
+
+    body_type_xpath = body_type[attributes['body_type']]
+    try:
+        wait.until(EC.presence_of_element_located((By.XPATH, body_type_xpath))).click()
+    except TimeoutException:
+        body_type_message = f"@everyone {profile_name} failed to select a body type"
+        send_to_discord(body_type_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next9 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next9.click()
+    except TimeoutException:
+        next9_message = f"@everyone {profile_name} failed to click next9 button"
+        send_to_discord(next9_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    personality = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[1]', #Adventurer 
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[2]', #Animal Lover
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[3]', #Artsy
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[4]', #Athletic
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[5]'  #Beach
+    ]
+
+    random_personality_index = random.randint(0, len(personality) - 1)
+
+    while True:
+        try:
+            personality_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, personality[random_personality_index])))
+            personality_chosen.click()
+            break
+        except TimeoutException:
+            personality_chosen_message = f"@everyone {profile_name} failed to select the personality"
+            send_to_discord(personality_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    try:
+        alcohol = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]')))
+        time.sleep(random_wait_time)
+        alcohol.click()
+    except TimeoutException:
+        alcohol_message = f"@everyone {profile_name} failed to select alcohol"
+        send_to_discord(alcohol_message)
+        print("------------------------------------------------------------------")
+        return
+
+    driver.execute_script("window.scrollBy(0, 200);")
+    driver.execute_script("window.scrollBy(0, 200);")
+
+    try:
+        smoker1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        smoker1.click()
+    except TimeoutException:
+        smoker1_message = f"@everyone {profile_name} failed to select smoker1"
+        send_to_discord(smoker1_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        drugs = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        drugs.click()
+    except TimeoutException:
+        drugs_message = f"@everyone {profile_name} failed to select drugs"
+        send_to_discord(drugs_message)
+        print("------------------------------------------------------------------")
+        return
+
+    vehicle = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[2]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[5]/div/div/div[2]/div[3]'
+    ]
+
+    random_vehicle_index = random.randint(0, len(vehicle) - 1)
+
+    while True:
+        try:
+            vehicle_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, vehicle[random_vehicle_index])))
+            vehicle_chosen.click()
+            break
+        except TimeoutException:
+            vehicle_chosen_message = f"@everyone {profile_name} failed to select the vehicle"
+            send_to_discord(vehicle_chosen_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    try:
+        next10 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next10.click()
+    except TimeoutException:
+        next10_message = f"@everyone {profile_name} failed to next10"
+        send_to_discord(next10_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    try:
+        have_kids = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[1]/div/div/div[2]/div[2]')))
+        time.sleep(random_wait_time)
+        have_kids.click()
+    except TimeoutException: 
+        have_kids_message = f"@everyone {profile_name} failed to select have kids"
+        send_to_discord(have_kids_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        want_kids = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[2]/div/div/div[2]/div[3]')))
+        time.sleep(random_wait_time)
+        want_kids.click()
+    except TimeoutException:
+        want_kids_message = f"@everyone {profile_name} failed to select want_kids"
+        send_to_discord(want_kids_message)
+        print("------------------------------------------------------------------")
+        return
+
+    have_pets = [
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[1]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[2]',
+        '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[3]/div/div/div[2]/div[3]'
+    ]
+
+    random_have_pets_index = random.randint(0, len(have_pets) - 1)
+
+    while True:
+        try:
+            have_pets_chosen = wait.until(EC.element_to_be_clickable((By.XPATH, have_pets[random_have_pets_index])))
+            have_pets_chosen.click()
+            break
+        except TimeoutException:
+            have_pets_message = f"@everyone {profile_name} failed to select the have_pets"
+            send_to_discord(have_pets_message)
+            print("------------------------------------------------------------------")
+            return  
+        except ElementClickInterceptedException:
+            print("Element click intercepted. Waiting for 5 seconds...")
+            time.sleep(5)
+
+    try:
+        parents_married = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div/div/div/div[4]/div/div/div[2]/div[1]')))
+        time.sleep(random_wait_time)
+        parents_married.click()
+    except TimeoutException: 
+        parents_married_message = f"@everyone {profile_name} failed to select parents_married"
+        send_to_discord(parents_married_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        slider4 = wait.until(EC.presence_of_element_located((By.ID, "createprofile-siblings-select")))
+        slider_width4 = slider4.size['width']
+        offset = slider_width4 / random_number
+        slider_handle4 = slider4.find_element(By.XPATH, ".//span[@class='MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary MuiSlider-thumb MuiSlider-thumbSizeMedium MuiSlider-thumbColorSecondary css-by71oc']")
+        action = ActionChains(driver)
+        action.click_and_hold(slider_handle4).move_by_offset(offset, 0).release().perform()
+    except TimeoutException:
+        slider4_message = f"@everyone {profile_name} failed on slider4 for siblings"
+        send_to_discord(slider4_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        birth_order = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div/div/div[2]/div/div/div[6]/ul/li/button')))
+        time.sleep(random_wait_time)
+        birth_order.click()
+    except TimeoutException: 
+        birth_order_message = f"@everyone {profile_name} failed to select birth_order"
+        send_to_discord(birth_order_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next11 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next11.click()
+    except TimeoutException:
+        next11_message = f"@everyone {profile_name} failed to click next11 button"
+        send_to_discord(next11_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    headline_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\headline.txt'
+    with open(headline_file_path, 'r') as file:
+        headlines = file.readlines()
+
+    chosen_headline = random.choice(headlines).strip()
+
+    try:
+        headline = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input#mui-1.MuiInputBase-input.MuiInput-input.css-mnn31[placeholder="Think like an ad headline for your profile"][maxlength="40"]')))
+        time.sleep(random_wait_time)
+        headline.click()
+        headline.send_keys(chosen_headline)
+    except TimeoutException:
+        headline_message = f"@everyone {profile_name} failed to type in the headline"
+        send_to_discord(headline_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next12 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next12.click()
+    except TimeoutException:
+        next12_message = f"@everyone {profile_name} failed to click next12 button"
+        send_to_discord(next12_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    blurb_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\blurb.txt'
+    with open(blurb_file_path, 'r') as file:
+        blurbs = file.readlines()
+
+    chosen_blurb = random.choice(blurbs).strip()
+
+    try:
+        blurb = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'textarea#createprofile-styled-textarea-input-with-border.MuiInputBase-input.MuiInput-input.MuiInputBase-inputMultiline.css-10oer18[placeholder="This could be your hobbies, dreams, nightmares, anything"][maxlength="7000"][aria-label="What\'s the most important thing that people should know about you?"]')))
+        time.sleep(random_wait_time)
+        blurb.click()
+        blurb.send_keys(chosen_blurb)
+    except TimeoutException:
+        blurb_message = f"@everyone {profile_name} failed to type in the blurb"
+        send_to_discord(blurb_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next13 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next13.click()
+    except TimeoutException:
+        next13_message = f"@everyone {profile_name} failed to click next13 button"
+        send_to_discord(next13_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    talking_about_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\talking_about.txt'
+    with open(talking_about_file_path, 'r') as file:
+        talking_abouts = file.readlines()
+
+    chosen_talking_about = random.choice(talking_abouts).strip()
+
+    try:
+        talking_about = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'textarea#createprofile-styled-textarea-input-with-border.MuiInputBase-input.MuiInput-input.MuiInputBase-inputMultiline.css-10oer18[placeholder="As long as it\'s not crossfit. Jokes."][maxlength="3000"][aria-label="Tell us your favorite topics for conversation."]')))
+        time.sleep(random_wait_time)
+        talking_about.click()
+        talking_about.send_keys(chosen_talking_about)
+    except TimeoutException:
+        talking_about_message = f"@everyone {profile_name} failed to type in the talking_about box"
+        send_to_discord(talking_about_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next14 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next14.click()
+    except TimeoutException:
+        next14_message = f"@everyone {profile_name} failed to click next14 button"
+        send_to_discord(next14_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    hobbies_file_path = r'G:\My Drive\Jays Bots\Dating Apps\POF\.txt Files For Dating App Codes\hobbies.txt'
+    with open(hobbies_file_path, 'r') as file:
+        hobbiess = file.readlines()
+
+    random.shuffle(hobbiess)
+
+    try:
+        hobbies_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input.MuiInputBase-input.MuiInputBase-inputAdornedEnd.css-mnn31[placeholder="Add an interest"]')))
+        for hobby in hobbiess[:4]:
+            chosen_hobby = hobby.strip()    
+            hobbies_input.clear()    
+            hobbies_input.click()
+            time.sleep(random_wait_time)    
+            hobbies_input.send_keys(chosen_hobby)
+            time.sleep(2)    
+            hobbies_input.send_keys(Keys.RETURN)
+            hobbies_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.MuiInputBase-input.MuiInputBase-inputAdornedEnd.css-mnn31[placeholder="Add an interest"]')))
+    except TimeoutException:
+        hobbies_message = f"@everyone {profile_name} failed to type hobbies in"
+        send_to_discord(hobbies_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next15 = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        next15.click()
+    except TimeoutException:
+        next15_message = f"@everyone {profile_name} failed to click next15 button"
+        send_to_discord(next15_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    #saved_progress()
+
+    API_KEY = "5nGsyb69QkbcWn52sZ9ixNZRnT2XCwBx"
+    SERVICE_NAME = "Plenty Of Fish"
+    COUNTRY_CODE = "GB" if chosen_country == "UK" else "US" if chosen_country == "US" else None
+
+    if COUNTRY_CODE is None:
+        print("Invalid country selection")
+        return
+    
+    ORDER_SMS_URL = "https://api.smspool.net/purchase/sms"
+    CHECK_SMS_URL = "https://api.smspool.net/sms/check"
+
+    def order_sms(api_key, country, service):
+        params = {
+            "key": api_key,
+            "country": country,
+            "service": service
+        }
+        response = requests.post(ORDER_SMS_URL, data=params)
+        return response.json()
+
+    def check_sms(api_key, order_id):
+        params = {
+            "key": api_key,
+            "orderid": order_id
+        }
+        response = requests.post(CHECK_SMS_URL, data=params)
+        return response.json()
+
+    order_response = order_sms(API_KEY, COUNTRY_CODE, SERVICE_NAME)
+    if order_response.get("success") == 1:
+        order_id = order_response.get("order_id")
+        phone_number = order_response.get("number")
+        
+        try:
+            phone_number_box = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[aria-label="Enter your phone number"][type="tel"]')))
+            if chosen_country == "US":
+                country_code_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/div[1]/div[1]/div/label/div/div[1]')))
+                country_code_dropdown.click()
+
+                country_code_box = driver.find_element(By.XPATH, '/html/body/div[5]/div[3]')
+                scroll_amount = 70  
+                for _ in range(scroll_amount):
+                    country_code_box.send_keys(Keys.ARROW_UP)
+                    time.sleep(0.1)
+
+                us_country_code = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[5]/div[3]/ul/li[1]')))
+                us_country_code.click()
+
+                phone_number_digits = str(phone_number)[1:]
+
+            elif chosen_country == "UK":
+                phone_number_digits = str(phone_number)[2:]
+
+            time.sleep(random_wait_time)
+            phone_number_box.click() 
+            phone_number_box.send_keys(phone_number_digits) 
+        except StaleElementReferenceException:
+            phone_number_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR,  'input[aria-label="Enter your phone number"][type="tel"]')))
+            actions = ActionChains(driver)
+            actions.click(phone_number_box).perform()
+        except TimeoutException:
+            phone_number_box_message = f"@everyone {profile_name} failed to click and put phone number in box"
+            send_to_discord(phone_number_box_message)
+            print("------------------------------------------------------------------")
+            return
+        
+        try:
+            send_code = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+            time.sleep(random_wait_time)
+            send_code.click()
+        except TimeoutException:
+            send_code_message = f"@everyone {profile_name} failed to click send code button"
+            send_to_discord(send_code_message)
+            print("------------------------------------------------------------------")
+            return
+        
+        #saved_progress()
+        
+        while True:
+            sms_status_response = check_sms(API_KEY, order_id)
+            sms_status = sms_status_response.get("status")
+            
+            if sms_status == 3: 
+                verification_code = sms_status_response.get("sms")
+                
+                verification_box_xpaths = [
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[1]/div/label/div/input',
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[2]/div/label/div/input',
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[3]/div/label/div/input',
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[4]/div/label/div/input',
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[5]/div/label/div/input',
+                    '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/ul/li[6]/div/label/div/input'
+                ]
+
+                try:
+                    for i, digit in enumerate(verification_code):
+                        box_xpath = verification_box_xpaths[i]  
+                        box = driver.find_element(By.XPATH, box_xpath)  
+                        box.clear()  
+                        box.send_keys(digit)
+                        time.sleep(1.5)
+                except TimeoutException:
+                    input_verify_code_message = f"@everyone {profile_name} failed to input the verification code"
+                    send_to_discord(input_verify_code_message)
+                    print("------------------------------------------------------------------")
+
+                
+                break
+            elif sms_status == 2:  
+                sms_expire_message = f"@everyone {profile_name} SMS expired."
+                send_to_discord(sms_expire_message)
+                print("------------------------------------------------------------------")
+
+                break
+    else:
+        order_fail_message = f"@everyone {profile_name} failed to order SMS."
+        send_to_discord(order_fail_message)
+        print("------------------------------------------------------------------")
+
+    try: 
+        verify = driver.find_element(By.CLASS_NAME, 'MuiButton-contained')
+        time.sleep(random_wait_time)
+        verify.click()
+    except TimeoutException:
+        verify_button_message = f"@everyone {profile_name} failed to click verify button"
+        send_to_discord(verify_button_message)
+        print("------------------------------------------------------------------")
+        return
+
+    #saved_progress()
+
+    time.sleep(random_wait_time)
+
+    try:
+        image_upload1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/input')))
+        time.sleep(random_wait_time)
+        photo_directory = f'G:/My Drive/Jays Bots/Dating Apps/Dating App Photos/{model_name}/Finished Photos'
+        photo_files1 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo1 = random.choice(photo_files1)
+        selected_photo_path1 = os.path.join(photo_directory, selected_photo1)
+        image_upload1.send_keys(selected_photo_path1)
+    except TimeoutException:
+        image1_message = f"@everyone {profile_name} failed to upload first photo"
+        send_to_discord(image1_message)
+        print("------------------------------------------------------------------")
+        return
+
+
+    time.sleep(random_wait_time)
+
+    try: 
+        save1 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div/div/div/form/div[2]/div/button')))
+        time.sleep(random_wait_time)
+        save1.click()
+    except TimeoutException:
+        save1_message = f"@everyone {profile_name} failed to click save1 button"
+        send_to_discord(save1_message)
+        print("------------------------------------------------------------------")
+        return
+
+    
+    #saved_progress()
+
+    time.sleep(random_wait_time)
+
+    try:
+        image_upload2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/input')))
+        time.sleep(random_wait_time)
+        photo_files2 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo2 = random.choice(photo_files2)
+        selected_photo_path2 = os.path.join(photo_directory, selected_photo2)
+        image_upload2.send_keys(selected_photo_path2)
+    except TimeoutException:
+        image2_message = f"@everyone {profile_name} failed to upload second photo"
+        send_to_discord(image2_message)
+        print("------------------------------------------------------------------")
+        return
+
+
+    time.sleep(random_wait_time)
+
+    try:
+        save2 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div/div/div/form/div[2]/div/button')))
+        time.sleep(random_wait_time)
+        save2.click()
+    except TimeoutException:
+        save2_message = f"@everyone {profile_name} failed to click save2 button"
+        send_to_discord(save2_message)
+        print("------------------------------------------------------------------")
+        return
+
+    
+    #saved_progress()
+
+    time.sleep(random_wait_time)
+
+    try:
+        image_upload3 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[1]/input')))
+        time.sleep(random_wait_time)
+        photo_files3 = [f for f in os.listdir(photo_directory) if os.path.isfile(os.path.join(photo_directory, f))]
+        selected_photo3 = random.choice(photo_files3)
+        selected_photo_path3 = os.path.join(photo_directory, selected_photo3)
+        image_upload3.send_keys(selected_photo_path3)
+    except TimeoutException:
+        image3_message = f"@everyone {profile_name} failed to upload third photo"
+        send_to_discord(image3_message)
+        print("------------------------------------------------------------------")
+        return
+    
+    try:
+        save3 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div/div/div/form/div[2]/div/button')))
+        time.sleep(random_wait_time)
+        save3.click()
+    except TimeoutException:
+        save3_message = f"@everyone {profile_name} failed to click save3 button"
+        send_to_discord(save3_message)
+        print("------------------------------------------------------------------")
+        return
+
+    try:
+        next16 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[2]/button')))
+        time.sleep(random_wait_time)
+        next16.click()
+    except TimeoutException:
+        next16_message = f"@everyone {profile_name} failed to click next16 button"
+        send_to_discord(next16_message)
+        print("------------------------------------------------------------------")
+        return
+
+    
+    #saved_progress()
+    
+    time.sleep(random_wait_time)
+    
+    try:
+        skip1 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div/div/div/div[4]/a/span/span")))
+        time.sleep(random_wait_time)
+        skip1.click()
+        survey_message = f"@everyone Survey came up for {profile_name}"
+        send_to_discord(survey_message)
+        print("------------------------------------------------------------------")
+    except TimeoutException:
+        skip1_message = f"@everyone Survey failed at part 1 for {profile_name}"
+        send_to_discord(skip1_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    try:
+        skip2 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div/div/div/div[4]/a/span/span")))
+        time.sleep(random_wait_time)
+        skip2.click()
+    except TimeoutException:
+        skip2_message = f"@everyone Survey failed at part 2 for {profile_name}"
+        send_to_discord(skip2_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    try:
+        skip3 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div/div/div/div[4]/a/span/span")))
+        time.sleep(random_wait_time)
+        skip3.click()
+    except TimeoutException:
+        skip3_message = f"@everyone Survey failed at part 3 for {profile_name}"
+        send_to_discord(skip3_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    try:
+        skip4 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div/div/div/div[4]/a/span/span")))
+        time.sleep(random_wait_time)
+        skip4.click()
+    except TimeoutException:
+        skip4_message = f"@everyone Survey failed at part 4 for {profile_name}"
+        send_to_discord(skip4_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    try:
+        next_survey = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div[1]/div[1]/div/div/div/div/button")))
+        time.sleep(random_wait_time)
+        next_survey.click()
+    except TimeoutException:
+        next_survey_message = f"@everyone Survey failed at last part for {profile_name}"
+        send_to_discord(next_survey_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    os.remove(selected_photo_path1)
+    os.remove(selected_photo_path2)
+
+    try:
+        next17 = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/button')))
+        time.sleep(random_wait_time)
+        next17.click()
+    except TimeoutException:
+        next17_message = f"@everyone {profile_name} failed to click next17 button"
+        send_to_discord(next17_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    #saved_progress()
+
+    try:
+        got_it = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[2]/button')))
+        time.sleep(random_wait_time)
+        got_it.click()
+    except TimeoutException:
+        got_it_message = f"@everyone {profile_name} failed to click got_it button"
+        send_to_discord(got_it_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    #saved_progress()
+                                                        
+    try:
+        no_thanks = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div[1]/div[1]/div/div[2]/div/div/div[3]/a')))
+        time.sleep(random_wait_time)
+        no_thanks.click() 
+    except TimeoutException:
+        no_thanks_message = f"@everyone {profile_name} failed to click no_thanks button"
+        send_to_discord(no_thanks_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    try:
+        x_button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, 'putXPathHere')))
+        time.sleep(random_wait_time)
+        x_button.click()
+    except TimeoutException:
+        x_button_message = f"@everyone {profile_name} failed to click X_button button"
+        send_to_discord(x_button_message)
+        print("------------------------------------------------------------------")
+        pass
+
+    #xpath for profile 1 - /html/body/div[1]/div[1]/div[2]/div/div/div/div[3]/div/div/ul/li[1]/a/div/img    
+                                                
+    meet_me = wait.until(EC.presence_of_element_located((By.ID, 'top-nav-meetme')))
+    time.sleep(random_wait_time)
+    meet_me.click()
+
+    record_data = {
+        "Model Name": model_name,
+        "Name": random_name,
+        "State": chosen_state,
+        "City": chosen_city,
+        "Email": chosen_email,
+        "Username": username,
+        "Password": password,
+        "Occupation": chosen_occupation,
+        "Headline": chosen_headline,
+        "Blurb": chosen_blurb,
+        "What you like talking about": chosen_talking_about,
+        "Hobbies": chosen_hobby,
+        "Main Photo": selected_photo_path1,
+        "Second Photo": selected_photo_path2,
+    }
+
+    airtable.insert(record_data)
+    airtable_message = "@everyone Account made and data added to Airtable"
+    send_to_discord(airtable_message)
+    
+if model_name in model_database:
+    attributes = model_database[model_name]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        list(executor.map(start_profile, profile_names))
+else:
+    print(f"Model named {model_name} not found!")
+    
+max_retries = 2
